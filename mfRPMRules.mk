@@ -90,7 +90,7 @@ _spec_update:
 	sed -i 's#__version__#$(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR).$(PACKAGE_VER_PATCH)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__release__#$(PACKAGE_FULL_RELEASE)#' $(PackagePath)/rpm/$(PackageName).spec
     ifeq ($(Arch),arm)
-	    sed -i 's#__prefix__#/mnt/persistent/$(PackageName)#' $(PackagePath)/rpm/$(PackageName).spec
+	    sed -i 's#__prefix__#/mnt/persistent/gemdaq#' $(PackagePath)/rpm/$(PackageName).spec
     else
 	    sed -i 's#__prefix__#$(INSTALL_PREFIX)#' $(PackagePath)/rpm/$(PackageName).spec
     endif
