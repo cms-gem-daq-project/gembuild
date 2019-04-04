@@ -59,16 +59,29 @@ endif
 .PHONY: _spec_update
 _spec_update:
 	@mkdir -p $(PackagePath)/rpm
-	if [ -e $(PackagePath)/spec.template ]; then \
-		echo $(PackagePath) found spec.template; \
-		cp $(PackagePath)/spec.template $(PackagePath)/rpm/$(PackageName).spec; \
-	elif [ -e $(BUILD_HOME)/$(Project)/config/specTemplate.spec ]; then \
-		echo  $(BUILD_HOME)/$(Project)/config/specTemplate.spec found; \
-		cp $(BUILD_HOME)/$(Project)/config/specTemplate.spec $(PackagePath)/rpm/$(PackageName).spec; \
-	else \
-		echo No valid spec template found; \
-		exit 2; \
-	fi
+    ifeq ($(Arch),arm)
+	    if [ -e $(PackagePath)/spec.template ]; then \
+	    	echo $(PackagePath) found spec.template; \
+	    	cp $(PackagePath)/spec.template $(PackagePath)/rpm/$(PackageName).spec; \
+	    elif [ -e $(BUILD_HOME)/$(Project)/config/specTemplateARM.spec ]; then \
+	    	echo  $(BUILD_HOME)/$(Project)/config/specTemplateARM.spec found; \
+	    	cp $(BUILD_HOME)/$(Project)/config/specTemplateARM.spec $(PackagePath)/rpm/$(PackageName).spec; \
+	    else \
+	    	echo No valid spec template found; \
+	    	exit 2; \
+	    fi
+    else
+	    if [ -e $(PackagePath)/spec.template ]; then \
+	    	echo $(PackagePath) found spec.template; \
+	    	cp $(PackagePath)/spec.template $(PackagePath)/rpm/$(PackageName).spec; \
+	    elif [ -e $(BUILD_HOME)/$(Project)/config/specTemplate.spec ]; then \
+	    	echo  $(BUILD_HOME)/$(Project)/config/specTemplate.spec found; \
+	    	cp $(BUILD_HOME)/$(Project)/config/specTemplate.spec $(PackagePath)/rpm/$(PackageName).spec; \
+	    else \
+	    	echo No valid spec template found; \
+	    	exit 2; \
+	    fi
+    endif
 
 	sed -i 's#__gitrev__#$(GITREV)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__builddate__#$(BUILD_DATE)#' $(PackagePath)/rpm/$(PackageName).spec
@@ -76,7 +89,11 @@ _spec_update:
 	sed -i 's#__packagename__#$(PackageName)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__version__#$(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR).$(PACKAGE_VER_PATCH)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__release__#$(PACKAGE_FULL_RELEASE)#' $(PackagePath)/rpm/$(PackageName).spec
-	sed -i 's#__prefix__#$(INSTALL_PREFIX)#' $(PackagePath)/rpm/$(PackageName).spec
+    ifeq ($(Arch),arm)
+	    sed -i 's#__prefix__#/mnt/persistent/$(PackageName)#' $(PackagePath)/rpm/$(PackageName).spec
+    else
+	    sed -i 's#__prefix__#$(INSTALL_PREFIX)#' $(PackagePath)/rpm/$(PackageName).spec
+    endif
 	sed -i 's#__sources_dir__#$(RPMBUILD_DIR)/SOURCES#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__packagedir__#$(PackagePath)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__os__#$(CMSGEMOS_OS)#' $(PackagePath)/rpm/$(PackageName).spec
