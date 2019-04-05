@@ -35,11 +35,9 @@ ifndef BUILD_REQUIRED_PACKAGE_LIST
 BUILD_REQUIRES_LIST=1
 endif
 
-IS_ARM=0
 RPM_OPTIONS=
 ifeq ($(Arch),arm)
     RPM_OPTIONS=--define "_binary_payload 1"
-	IS_ARM=1
 endif
 
 .PHONY: rpm _rpmall
@@ -89,7 +87,6 @@ _spec_update:
 	sed -i 's#__buildarch__#$(Arch)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__requires_list__#$(REQUIRED_PACKAGE_LIST)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__build_requires_list__#$(BUILD_REQUIRED_PACKAGE_LIST)#' $(PackagePath)/rpm/$(PackageName).spec
-	sed -i 's#__is_arm__#$(IS_ARM)#' $(PackagePath)/rpm/$(PackageName).spec
 
 	if [ -e $(PackagePath)/scripts/postinstall.sh ]; then \
 		sed -i '\#\bpost\b#r $(PackagePath)/scripts/postinstall.sh' $(PackagePath)/rpm/$(PackageName).spec; \

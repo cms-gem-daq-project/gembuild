@@ -17,7 +17,8 @@
 
 %define _unpackaged_files_terminate_build 0
 
-%define _is_arm __is_arm__
+%define add_arm_libs %( if [ -d 'lib/arm' ]; then echo "1" ; else echo "0"; fi )
+%define is_arm  %( if [[ '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
 
 #
 # Binary RPM specified attributed (lib and bin)
@@ -35,8 +36,8 @@ BuildRoot: %{_tmppath}/%{_packagename}-%{_version}-%{_release}-buildroot
 Prefix: %{_prefix}
 Requires: __requires_list__
 BuildRequires: __build_requires_list__
-%if %{_is_arm}
-AutoReqProv: no
+%if %{is_arm}
+AutoReq: no
 %endif
 
 %description
@@ -146,10 +147,6 @@ rm -rf $RPM_BUILD_ROOT
 
 # Do not check .so files in an arm-specific library directory for provides
 %global __provides_exclude_from ^%{_prefix}/lib/arm/*\\.so$
-
-# %define add_arm_libs %( if [[ '__buildarch__' =~ "arm" ]] || [ -d 'lib/arm' ]; then echo "0" ; else echo "1"; fi )
-%define add_arm_libs %( if [ -d 'lib/arm' ]; then echo "1" ; else echo "0"; fi )
-%define is_arm  %( if [[ '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
 
 %files -n %{_packagename}-devel
 %defattr(-,root,root,0755)
