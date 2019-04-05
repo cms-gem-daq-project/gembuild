@@ -17,6 +17,8 @@
 
 %define _unpackaged_files_terminate_build 0
 
+%define _is_arm __is_arm__
+
 #
 # Binary RPM specified attributed (lib and bin)
 #
@@ -33,6 +35,9 @@ BuildRoot: %{_tmppath}/%{_packagename}-%{_version}-%{_release}-buildroot
 Prefix: %{_prefix}
 Requires: __requires_list__
 BuildRequires: __build_requires_list__
+%if %{_is_arm}
+AutoReqProv: no
+%endif
 
 %description
 __description__

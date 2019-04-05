@@ -35,6 +35,13 @@ ifndef BUILD_REQUIRED_PACKAGE_LIST
 BUILD_REQUIRES_LIST=1
 endif
 
+IS_ARM=0
+RPM_OPTIONS=
+ifeq ($(Arch),arm)
+    RPM_OPTIONS=--define "_binary_payload 1"
+	IS_ARM=1
+endif
+
 .PHONY: rpm _rpmall
 rpm: _rpmall
 _rpmall: _all _spec_update _rpmbuild
@@ -42,19 +49,12 @@ _rpmall: _all _spec_update _rpmbuild
 .PHONY: _rpmbuild _rpmprep
 _rpmbuild: _spec_update _rpmprep
 	@mkdir -p ${RPMBUILD_DIR}/{RPMS/{arm,noarch,i586,i686,x86_64},SPECS,BUILD,SOURCES,SRPMS}
-ifeq ($(Arch),arm)
-	rpmbuild -bb -bl --buildroot=${RPMBUILD_DIR}/BUILD --target ${Arch} \
-		--define "_requires $(REQUIRES_LIST)" \
-		--define "_build_requires $(BUILD_REQUIRES_LIST)" \
-		--define "_topdir ${RPMBUILD_DIR}" --define "_binary_payload 1" rpm/${PackageName}.spec
-else
-	rpmbuild --quiet -ba -bl --buildroot=${RPMBUILD_DIR}/BUILD --target ${Arch} \
-		--define "_requires $(REQUIRES_LIST)" \
-		--define "_build_requires $(BUILD_REQUIRES_LIST)" \
-		--define "_topdir ${RPMBUILD_DIR}" rpm/${PackageName}.spec
-endif
-	find  ${RPMBUILD_DIR} -name "*.rpm" -exec mv {} $(PackagePath)/rpm \;
-
+	rpmbuild --quiet -ba -bl \
+    --define "_requires $(REQUIRES_LIST)" \
+    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
+    --define  "_topdir $(PWD)/rpm/RPMBUILD" $(PackagePath)/rpm/$(PackageName).spec \
+    $(RPM_OPTIONS) --target "$(Arch)"
+	find  $(PackagePath)/rpm/RPMBUILD -name "*.rpm" -exec mv {} $(PackagePath)/rpm \;
 
 .PHONY: _spec_update
 _spec_update:
@@ -89,6 +89,12 @@ _spec_update:
 	sed -i 's#__buildarch__#$(Arch)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__requires_list__#$(REQUIRED_PACKAGE_LIST)#' $(PackagePath)/rpm/$(PackageName).spec
 	sed -i 's#__build_requires_list__#$(BUILD_REQUIRED_PACKAGE_LIST)#' $(PackagePath)/rpm/$(PackageName).spec
+	sed -i 's#__is_arm__#$(IS_ARM)#' $(PackagePath)/rpm/$(PackageName).spec
+
+	if [ -e $(PackagePath)/scripts/postinstall.sh ]; then \
+		sed -i '\#\bpost\b#r $(PackagePath)/scripts/postinstall.sh' $(PackagePath)/rpm/$(PackageName).spec; \
+	    sed -i 's#__prefix__#$(INSTALL_PREFIX)#' $(PackagePath)/rpm/$(PackageName).spec; \
+	fi
 
 
 .PHONY: cleanrpm _cleanrpm
