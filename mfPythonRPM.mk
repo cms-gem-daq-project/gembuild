@@ -1,9 +1,7 @@
 # Created with insights from
 ## amc13/config/mfPythonRPMRules.mk
 
-ifndef INSTALL_PATH
-INSTALL_PATH = /opt/cmsgemos
-endif
+INSTALL_PATH?=/opt/$(Project)
 
 ProjectPath  ?= $(BUILD_HOME)/$(Project)
 PackagePath  ?= $(BUILD_HOME)/$(Project)
@@ -11,7 +9,7 @@ RPMBUILD_DIR = $(PackagePath)/rpm
 #
 
 ifndef PACKAGE_FULL_RELEASE
-PACKAGE_FULL_RELEASE ?= $(PACKAGE_NOARCH_RELEASE).$(CMSGEMOS_OS)
+PACKAGE_FULL_RELEASE ?= $(PACKAGE_NOARCH_RELEASE).$(GEM_OS)
 endif
 
 ifndef PythonModules
@@ -43,7 +41,7 @@ _rpmsetup: _rpmprep _setup_update
 _rpmbuild: _sdistbuild
 	@echo "Running _rpmbuild target"
 	cd $(RPMBUILD_DIR) && python setup.py bdist_rpm \
-	--release $(PACKAGE_NOARCH_RELEASE).$(CMSGEMOS_OS).python$(PYTHON_VERSION) \
+	--release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION) \
 	--force-arch=noarch
 
 _rpmarm: _rpmsetup
@@ -54,7 +52,8 @@ _rpmarm: _rpmsetup
 	--force-arch=noarch --spec-only
 	mkdir -p $(RPMBUILD_DIR)/arm/SOURCES
 	cp $(RPMBUILD_DIR)/dist/*.tar.gz $(RPMBUILD_DIR)/arm/SOURCES/
-	rpmbuild -bb --define "_topdir $(RPMBUILD_DIR)/arm" --define "_binary_payload 1" $(RPMBUILD_DIR)/dist/${PackageName}.spec --clean
+	rpmbuild -bb --define "_topdir $(RPMBUILD_DIR)/arm" \
+	--define "_binary_payload 1" $(RPMBUILD_DIR)/dist/${PackageName}.spec --clean
 
 _bdistbuild: _rpmsetup
 	@echo "Running _tarbuild target"
@@ -113,8 +112,8 @@ _setup_update:
 	sed -i 's#__longpackage__#$(LongPackage)#'        $(RPMBUILD_DIR)/setup.py
 	sed -i 's#__pythonmodules__#$(PythonModules)#'    $(RPMBUILD_DIR)/setup.py
 	sed -i 's#__prefix__#$(GEMPYTHON_ROOT)#'          $(RPMBUILD_DIR)/setup.py
-	sed -i 's#__os__#$(CMSGEMOS_OS)#'                 $(RPMBUILD_DIR)/setup.py
-	sed -i 's#__platform__#$(CMSGEMOS_PLATFORM)#'     $(RPMBUILD_DIR)/setup.py
+	sed -i 's#__os__#$(GEM_OS)#'                      $(RPMBUILD_DIR)/setup.py
+	sed -i 's#__platform__#$(GEM_PLATFORM)#'          $(RPMBUILD_DIR)/setup.py
 	sed -i 's#__description__#None#'                  $(RPMBUILD_DIR)/setup.py
 	sed -i 's#___gitrev___#$(GITREV)#'                $(RPMBUILD_DIR)/setup.py
 	sed -i 's#___gitver___#$(GIT_VERSION)#'           $(RPMBUILD_DIR)/setup.py
@@ -156,8 +155,8 @@ _setup_update:
 	sed -i 's#__longpackage__#$(LongPackage)#'        $(RPMBUILD_DIR)/setup.cfg
 	sed -i 's#__pythonmodules__#$(PythonModules)#'    $(RPMBUILD_DIR)/setup.cfg
 	sed -i 's#__prefix__#$(GEMPYTHON_ROOT)#'          $(RPMBUILD_DIR)/setup.cfg
-	sed -i 's#__os__#$(CMSGEMOS_OS)#'                 $(RPMBUILD_DIR)/setup.cfg
-	sed -i 's#__platform__#$(CMSGEMOS_PLATFORM)#'     $(RPMBUILD_DIR)/setup.cfg
+	sed -i 's#__os__#$(GEM_OS)#'                      $(RPMBUILD_DIR)/setup.cfg
+	sed -i 's#__platform__#$(GEM_PLATFORM)#'          $(RPMBUILD_DIR)/setup.cfg
 	sed -i 's#__description__#None#'                  $(RPMBUILD_DIR)/setup.cfg
 	sed -i 's#___gitrev___#$(GITREV)#'                $(RPMBUILD_DIR)/setup.cfg
 	sed -i 's#___gitver___#$(GIT_VERSION)#'           $(RPMBUILD_DIR)/setup.cfg
