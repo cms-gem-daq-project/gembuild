@@ -1,3 +1,7 @@
+ifndef PETA_STAGE
+$(error "Error: PETA_STAGE environment variable not set.")
+endif
+
 CFLAGS= -fomit-frame-pointer -pipe -fno-common -fno-builtin \
 	-Wall -std=c++14 \
 	-march=armv7-a -mfpu=neon -mfloat-abi=hard \
