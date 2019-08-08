@@ -6,6 +6,9 @@ ifndef INSTALL_PATH
 CMSGEMOS_ROOT := /opt/cmsgemos
 endif
 
+INSTALL_PREFIX?=/opt/$(Project)
+XDAQ_ROOT?=/opt/xdaq
+
 CMSGEMOS_PLATFORM := $(shell python -c "import platform; print(platform.platform())")
 CMSGEMOS_OS       := "unknown.os"
 
@@ -58,7 +61,8 @@ PREREL_VERSION:= $(shell $(BUILD_HOME)/$(Project)/config/tag2rel.sh | awk '{spli
 $(info BUILD_VERSION $(BUILD_VERSION))
 $(info PREREL_VERSION $(PREREL_VERSION))
 
-CC=gcc
+CXX?=g++
+CC?=gcc
 
 PACKAGE_FULL_VERSION ?= $(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR).$(PACKAGE_VER_PATCH)
 PACKAGE_NOARCH_RELEASE ?= $(BUILD_VERSION).$(GITREV)git
