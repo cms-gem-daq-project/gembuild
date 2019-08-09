@@ -3,9 +3,10 @@
 
 INSTALL_PATH?=/opt/$(Project)
 
-ProjectPath  ?= $(BUILD_HOME)/$(Project)
-PackagePath  ?= $(BUILD_HOME)/$(Project)
-RPMBUILD_DIR = $(PackagePath)/rpm
+ProjectPath ?= $(BUILD_HOME)/$(Project)
+PackagePath ?= $(BUILD_HOME)/$(Project)
+RPM_DIR      = $(PackagePath)/rpm
+RPMBUILD_DIR = $(RPM_DIR)/build
 #
 
 ifndef PACKAGE_FULL_RELEASE
@@ -13,16 +14,17 @@ PACKAGE_FULL_RELEASE ?= $(PACKAGE_NOARCH_RELEASE).$(GEM_OS)
 endif
 
 ifndef PythonModules
-	$(error Python module names missing "PythonModules")
+$(error Python module names missing "PythonModules")
 endif
 
-.PHONY: pip rpm _rpmall _rpmprep _setup_update _rpmbuild _rpmdevbuild _rpmsetup _bdistbuild _sdistbuild _harvest
+.PHONY: pip _sdistbuild _harvest
 pip: _sdistbuild _harvest
 	@echo "Running pip target"
 
+.PHONY: rpm _rpmall _rpmprep _setup_update _rpmbuild _rpmdevbuild _rpmsetup _bdistbuild _sdistbuild
 rpm: _rpmall _harvest
 	@echo "Running rpm target"
-	find $(RPMBUILD_DIR)/dist -iname "*.rpm" -print0 -exec mv -t $(RPMBUILD_DIR) {} \+
+	find $(RPMBUILD_DIR) -iname "*.rpm" -print0 -exec mv -t $(RPM_DIR) {} \+
 
 #_rpmall: _all _rpmprep _setup_update _rpmsetup _rpmbuild
 _rpmall: _all _rpmbuild
@@ -34,73 +36,85 @@ _rpmsetup: _rpmprep _setup_update
 # Change directory into pkg and copy everything into rpm build dir
 	@echo "Running _rpmsetup target"
 	cd pkg && \
-	find . -iname 'setup.*' -prune -o -name "*" -exec install -D \{\} $(RPMBUILD_DIR)/\{\} \;
+	    find . -iname 'setup.*' -prune -o -name "*" -exec install -D \{\} $(RPMBUILD_DIR)/\{\} \;
 # Add a manifest file (may not be necessary
 #	echo "include */*.so" > $(RPMBUILD_DIR)/MANIFEST.in
 
 _rpmbuild: _sdistbuild
 	@echo "Running _rpmbuild target"
 	cd $(RPMBUILD_DIR) && python setup.py bdist_rpm \
-	--release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION) \
-	--force-arch=noarch
+	    --release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION) \
+	    --force-arch=noarch
 
 _rpmarm: _rpmsetup
 	@echo "Running _rpmarm target"
 	cd $(RPMBUILD_DIR) && python setup.py sdist --formats=gztar \
-	bdist_rpm \
-	--release $(PACKAGE_NOARCH_RELEASE).peta_linux.python$(PYTHON_VERSION) \
-	--force-arch=noarch --spec-only
+	    bdist_rpm --quiet \
+	    --release $(PACKAGE_NOARCH_RELEASE).peta_linux.python$(PYTHON_VERSION) \
+	    --force-arch=noarch --spec-only
 	mkdir -p $(RPMBUILD_DIR)/arm/SOURCES
 	cp $(RPMBUILD_DIR)/dist/*.tar.gz $(RPMBUILD_DIR)/arm/SOURCES/
-	rpmbuild -bb --define "_topdir $(RPMBUILD_DIR)/arm" \
-	--define "_binary_payload 1" $(RPMBUILD_DIR)/dist/${PackageName}.spec --clean
+	rpmbuild --quiet -bb --clean \
+	    --define "_binary_payload 1" \
+	    --define "_topdir $(RPMBUILD_DIR)/arm" \
+	    $(RPMBUILD_DIR)/dist/${PackageName}.spec
 
 _bdistbuild: _rpmsetup
 	@echo "Running _tarbuild target"
 	cd $(RPMBUILD_DIR) && python setup.py \
-	egg_info --tag-build=$(PREREL_VERSION) \
-	bdist --formats=bztar,gztar,zip
+	    egg_info --tag-build=$(PREREL_VERSION) \
+	    bdist --formats=bztar,gztar,zip
 
 _sdistbuild: _rpmsetup
 	@echo "Running _tarbuild target"
 	cd $(RPMBUILD_DIR) && python setup.py \
-	egg_info --tag-build=$(PREREL_VERSION) \
-	sdist --formats=bztar,gztar,zip
+	    egg_info --tag-build=$(PREREL_VERSION) \
+	    sdist --formats=bztar,gztar,zip
 
 _harvest:
 # Harvest the crop
 	find $(RPMBUILD_DIR)/dist \( -iname "*.tar.gz" \
-	-o -iname "*.tar.bz2" \
-	-o -iname "*.tgz" \
-	-o -iname "*.zip" \
-	-o -iname "*.tbz2" \) -print0 -exec mv -t $(RPMBUILD_DIR)/ {} \+
-	-rename tar. t $(RPMBUILD_DIR)/*tar*
+	    -o -iname "*.tar.bz2" \
+	    -o -iname "*.tgz" \
+	    -o -iname "*.zip" \
+	    -o -iname "*.tbz2" \) -print0 -exec mv -t $(RPM_DIR)/ {} \+
+	-rename tar. t $(RPM_DIR)/*tar*
 
 _setup_update:
 	@echo "Running _setup_update target"
 	$(MakeDir) $(RPMBUILD_DIR)
 
 	if [ -e $(PackagePath)/setup.py ]; then \
-		echo Found $(PackagePath)/setup.py; \
-		cp $(PackagePath)/setup.py $(RPMBUILD_DIR)/setup.py; \
+	    echo "Found $(PackagePath)/setup.py"; \
+	    echo "$(PackagePath)/setup.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(PackagePath)/setup.py $(RPMBUILD_DIR)/setup.py; \
 	elif [ -e $(PackagePath)/pkg/setup.py ]; then \
-		echo Found $(PackagePath)/pkg/setup.py; \
-		cp $(PackagePath)/pkg/setup.py $(RPMBUILD_DIR)/setup.py; \
+	    echo "Found $(PackagePath)/pkg/setup.py"; \
+	    echo "$(PackagePath)/pkg/setup.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(PackagePath)/pkg/setup.py $(RPMBUILD_DIR)/setup.py; \
 	elif [ -e $(PackagePath)/setup/setup.py ]; then \
-		echo Found $(PackagePath)/setup/setup.py; \
-		cp $(PackagePath)/setup/setup.py $(RPMBUILD_DIR)/setup.py; \
+	    echo "Found $(PackagePath)/setup/setup.py"; \
+	    echo "$(PackagePath)/setup/setup.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(PackagePath)/setup/setup.py $(RPMBUILD_DIR)/setup.py; \
 	elif [ -e $(PackagePath)/setup/build/setup.py ]; then \
-		echo Found $(PackagePath)/setup/build/setup.py; \
-		cp $(PackagePath)/setup/build/setup.py $(RPMBUILD_DIR)/setup.py; \
+	    echo "Found $(PackagePath)/setup/build/setup.py"; \
+	    echo "$(PackagePath)/setup/build/setup.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(PackagePath)/setup/build/setup.py $(RPMBUILD_DIR)/setup.py; \
 	elif [ -e $(ProjectPath)/setup/config/setupTemplate.py ]; then \
-		echo Found $(ProjectPath)/setup/config/setupTemplate.py; \
-		cp $(ProjectPath)/setup/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
+	    echo "Found $(ProjectPath)/setup/config/setupTemplate.py"; \
+	    echo "$(ProjectPath)/setup/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(ProjectPath)/setup/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
+	elif [ -e $(ProjectPath)/config/setupTemplate.py ]; then \
+	    echo "Found $(ProjectPath)/config/setupTemplate.py"; \
+	    echo "$(ProjectPath)/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(ProjectPath)/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
 	elif [ -e $(BUILD_HOME)/config/build/setupTemplate.py ]; then \
-		echo Found $(BUILD_HOME)/config/build/setupTemplate.py; \
-		cp $(BUILD_HOME)/config/build/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
+	    echo "Found $(BUILD_HOME)/config/build/setupTemplate.py"; \
+	    echo "$(BUILD_HOME)/config/build/setupTemplate.py $(RPMBUILD_DIR)/setup.py"; \
+	    cp $(BUILD_HOME)/config/build/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
 	else \
-		echo Unable to find any setupTemplate.py; \
-		exit 1; \
+	    echo "Unable to find any setupTemplate.py"; \
+	    exit 2; \
 	fi
 
 	sed -i 's#__author__#$(Packager)#'                $(RPMBUILD_DIR)/setup.py
@@ -124,26 +138,36 @@ _setup_update:
 	sed -i 's#___builddate___#$(BUILD_DATE)#'         $(RPMBUILD_DIR)/setup.py
 
 	if [ -e $(PackagePath)/setup.cfg ]; then \
-		echo Found $(PackagePath)/setup.cfg; \
-		cp $(PackagePath)/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	    echo "Found $(PackagePath)/setup.cfg"; \
+	    echo "$(PackagePath)/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(PackagePath)/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	elif [ -e $(PackagePath)/pkg/setup.cfg ]; then \
-		echo Found $(PackagePath)/pkg/setup.cfg; \
-		cp $(PackagePath)/pkg/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	    echo "Found $(PackagePath)/pkg/setup.cfg"; \
+	    echo "$(PackagePath)/pkg/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(PackagePath)/pkg/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	elif [ -e $(PackagePath)/setup/setup.cfg ]; then \
-		echo Found $(PackagePath)/setup/setup.cfg; \
-		cp $(PackagePath)/setup/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	    echo "Found $(PackagePath)/setup/setup.cfg"; \
+	    echo "$(PackagePath)/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(PackagePath)/setup/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	elif [ -e $(PackagePath)/setup/build/setup.cfg ]; then \
-		echo Found $(PackagePath)/setup/build/setup.cfg; \
-		cp $(PackagePath)/setup/build/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	    echo "Found $(PackagePath)/setup/build/setup.cfg"; \
+	    echo "$(PackagePath)/setup/build/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(PackagePath)/setup/build/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	elif [ -e $(ProjectPath)/setup/config/setupTemplate.cfg ]; then \
-		echo Found $(ProjectPath)/setup/config/setupTemplate.cfg; \
-		cp $(ProjectPath)/setup/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	    echo "Found $(ProjectPath)/setup/config/setupTemplate.cfg"; \
+	    echo "$(ProjectPath)/setup/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(ProjectPath)/setup/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	elif [ -e $(ProjectPath)/config/setupTemplate.cfg ]; then \
+	    echo "Found $(ProjectPath)/config/setupTemplate.cfg"; \
+	    echo "$(ProjectPath)/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(ProjectPath)/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	elif [ -e $(BUILD_HOME)/config/build/setupTemplate.cfg ]; then \
-		echo Found $(BUILD_HOME)/config/setupTemplate.cfg; \
-		cp $(BUILD_HOME)/config/build/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
+	    echo "Found $(BUILD_HOME)/config/setupTemplate.cfg"; \
+	    echo "$(BUILD_HOME)/config/build/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg"; \
+	    cp $(BUILD_HOME)/config/build/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	else \
-		echo Unable to find any setupTemplate.cfg; \
-		exit 1; \
+	    echo "Unable to find any setupTemplate.cfg"; \
+	    exit 2; \
 	fi
 
 	sed -i 's#__author__#$(Packager)#'                $(RPMBUILD_DIR)/setup.cfg

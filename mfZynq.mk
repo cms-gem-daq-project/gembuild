@@ -15,11 +15,12 @@ LDLIBS= -L$(PETA_STAGE)/lib \
 	-L$(PETA_STAGE)/usr/lib \
 	-L$(PETA_STAGE)/ncurses
 
-LDFLAGS= -L$(PETA_STAGE)/lib \
+LDFLAGS= -g \
+	-L$(PETA_STAGE)/lib \
 	-L$(PETA_STAGE)/usr/lib \
 	-L$(PETA_STAGE)/ncurses
 
-INSTALL_PREFIX?=/mnt/persistent/$(Project)
+INSTALL_PATH=/mnt/persistent/$(Project)
 
 CXX:=arm-linux-gnueabihf-g++
 CC:=arm-linux-gnueabihf-gcc
