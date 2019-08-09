@@ -5,11 +5,13 @@
 ## xdaq/config/mfSetupRPM.rules
 ## xdaq/config/mfExternRPM.rules
 
-RPMBUILD_DIR=$(PackagePath)/rpm
+RPM_DIR=$(PackagePath)/rpm
+RPMBUILD_DIR=$(RPM_DIR)/RPMBUILD
 
 ifndef BUILD_COMPILER
-BASE_COMPILER=$(subst -,_,$(CC))
-BUILD_COMPILER :=$(BASE_COMPILER)$(shell $(CC) -dumpversion | sed -e 's/\./_/g')
+BASE_COMPILER  =$(word 1, $(shell $(CC) --version))
+BASE_COMPILER :=$(subst -,_,$(BASE_COMPILER))
+BUILD_COMPILER:=$(BASE_COMPILER)$(shell $(CC) -dumpfullversion -dumpversion | sed -e 's/\./_/g')
 endif
 
 ifndef PACKAGE_FULL_RELEASE
@@ -46,51 +48,62 @@ _rpmall: _all _spec_update _rpmbuild
 
 .PHONY: _rpmbuild _rpmprep
 _rpmbuild: _spec_update _rpmprep
-	@mkdir -p $(RPMBUILD_DIR)/RPMBUILD/{RPMS/{arm,noarch,i586,i686,x86_64},SPECS,BUILD,SOURCES,SRPMS}
+	$(MakeDir) $(RPMBUILD_DIR)/{RPMS/{arm,noarch,i586,i686,x86_64},SPECS,BUILD,SOURCES,SRPMS}
 	rpmbuild --quiet -ba -bl \
-    --define "_requires $(REQUIRES_LIST)" \
-    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
-    --define  "_topdir $(PWD)/rpm/RPMBUILD" $(RPMBUILD_DIR)/$(PackageName).spec \
+	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
+	    --define "_requires $(REQUIRES_LIST)" \
+	    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
+	    --define  "_topdir $(RPMBUILD_DIR)" $(RPM_DIR)/$(PackageName).spec \
     $(RPM_OPTIONS) --target "$(Arch)"
-	find  $(RPMBUILD_DIR)/RPMBUILD -name "*.rpm" -exec mv {} $(RPMBUILD_DIR) \;
+	find  $(RPMBUILD_DIR) -name "*.rpm" -exec mv {} $(RPM_DIR)/ \;
 
 .PHONY: _spec_update
 _spec_update:
-	@mkdir -p $(RPMBUILD_DIR)
+	$(MakeDir) $(RPMBUILD_DIR)
 	if [ -e $(PackagePath)/spec.template ]; then \
-		echo $(PackagePath) found spec.template; \
-		cp $(PackagePath)/spec.template $(RPMBUILD_DIR)/$(PackageName).spec; \
-	elif [ -e $(BUILD_HOME)/$(Project)/config/specTemplate.spec ]; then \
-		echo  $(BUILD_HOME)/$(Project)/config/specTemplate.spec found; \
-		cp $(BUILD_HOME)/$(Project)/config/specTemplate.spec $(RPMBUILD_DIR)/$(PackageName).spec; \
+	    echo "$(PackagePath) found spec.template"; \
+	    echo "cp $(PackagePath)/spec.template $(RPM_DIR)/$(PackageName).spec"; \
+	    cp $(PackagePath)/spec.template $(RPM_DIR)/$(PackageName).spec; \
+	elif [ -e $(ProjectPath)/config/specTemplate.spec ]; then \
+	    echo "$(ProjectPath)/config/specTemplate.spec found"; \
+	    echo "cp $(ProjectPath)/config/specTemplate.spec $(RPM_DIR)/$(PackageName).spec"; \
+	    cp $(ProjectPath)/config/specTemplate.spec $(RPM_DIR)/$(PackageName).spec; \
 	else \
-		echo No valid spec template found; \
-		exit 2; \
+	    echo "No valid spec template found"; \
+	    exit 2; \
 	fi
 
-	sed -i 's#__gitrev__#$(GITREV)#'                                   $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__builddate__#$(BUILD_DATE)#'                            $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__package__#$(Package)#'                                 $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__packagename__#$(PackageName)#'                         $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__version__#$(PACKAGE_FULL_VERSION)#'                    $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__release__#$(PACKAGE_FULL_RELEASE)#'                    $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__prefix__#$(INSTALL_PREFIX)#'                           $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__sources_dir__#$(RPMBUILD_DIR)/RPMBUILD/SOURCES#'       $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__packagedir__#$(PackagePath)#'                          $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__os__#$(GEM_OS)#'                                       $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__platform__#$(GEM_PLATFORM)#'                           $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__project__#$(Project)#'                                 $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__author__#$(Packager)#'                                 $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__summary__#None#'                                       $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__description__#None#'                                   $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__url__#None#'                                           $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__buildarch__#$(Arch)#'                                  $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__requires_list__#$(REQUIRED_PACKAGE_LIST)#'             $(RPMBUILD_DIR)/$(PackageName).spec
-	sed -i 's#__build_requires_list__#$(BUILD_REQUIRED_PACKAGE_LIST)#' $(RPMBUILD_DIR)/$(PackageName).spec
+	sed -i 's#__gitrev__#$(GITREV)#'                                   $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__builddate__#$(BUILD_DATE)#'                            $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__package__#$(Package)#'                                 $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__longpackage__#$(LongPackage)#'                         $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__packagename__#$(PackageName)#'                         $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__version__#$(PACKAGE_FULL_VERSION)#'                    $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__release__#$(PACKAGE_FULL_RELEASE)#'                    $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__prefix__#$(INSTALL_PATH)#'                             $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__sources_dir__#$(RPMBUILD_DIR)/SOURCES#'                $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__packagedir__#$(PackagePath)#'                          $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__os__#$(GEM_OS)#'                                       $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__platform__#$(GEM_PLATFORM)#'                           $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__project__#$(Project)#'                                 $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__author__#$(Packager)#'                                 $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__summary__#None#'                                       $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__description__#None#'                                   $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__url__#None#'                                           $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__buildarch__#$(Arch)#'                                  $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__requires_list__#$(REQUIRED_PACKAGE_LIST)#'             $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__build_requires_list__#$(BUILD_REQUIRED_PACKAGE_LIST)#' $(RPM_DIR)/$(PackageName).spec
 
-	if [ -e $(PackagePath)/scripts/postinstall.sh ]; then \
-		sed -i '\#\bpost\b#r $(PackagePath)/scripts/postinstall.sh' $(RPMBUILD_DIR)/$(PackageName).spec; \
-	    sed -i 's#__prefix__#$(INSTALL_PREFIX)#' $(RPMBUILD_DIR)/$(PackageName).spec; \
+#	@if [ "${BuildDebuginfoRPM}" == "1" ]; then \
+#	    echo "sed -i '1 i\%define _build_debuginfo_package %{nil}' $(RPM_DIR)/$(PackageName).spec"; \
+#	    sed -i '1 i\%define _build_debuginfo_package %{nil}' $(RPM_DIR)/$(PackageName).spec; \
+#	fi
+
+	@if [ -e $(PackagePath)/scripts/postinstall.sh ]; then \
+	    echo "sed -i '\#\bpost\b#r $(PackagePath)/scripts/postinstall.sh' $(RPM_DIR)/$(PackageName).spec"; \
+	    sed -i '\#\bpost\b#r $(PackagePath)/scripts/postinstall.sh' $(RPM_DIR)/$(PackageName).spec; \
+	    echo "sed -i 's#__prefix__#$(INSTALL_PATH)#' $(RPM_DIR)/$(PackageName).spec"; \
+	    sed -i 's#__prefix__#$(INSTALL_PATH)#' $(RPM_DIR)/$(PackageName).spec; \
 	fi
 
 
