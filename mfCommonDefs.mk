@@ -1,14 +1,12 @@
-BUILD_HOME ?= $(shell dirname `pwd`)
+BUILD_HOME?=$(shell dirname `pwd`)
 $(info Using BUILD_HOME=$(BUILD_HOME))
 
 INSTALL_PATH=/opt/$(Project)
 
-ProjectPath = $(BUILD_HOME)/$(Project)
-
-# cmsgemos config. This section should be sourced from /opt/cmsgemos/config
 CMSGEMOS_ROOT?=/opt/cmsgemos
 CACTUS_ROOT?=/opt/cactus
 XDAQ_ROOT?=/opt/xdaq
+XHAL_ROOT?=/opt/xhal
 
 GEM_PLATFORM := $(shell python -c "import platform; print(platform.platform())")
 GEM_OS       := "unknown.os"
@@ -43,7 +41,6 @@ ifeq ($(UNAME),Darwin)
 endif
 
 $(info OS Detected: $(GEM_OS))
-# end of cmsgemos config
 
 # Tools
 MakeDir=mkdir -p
@@ -55,8 +52,9 @@ PACKAGE_VER_MAJOR?=$($(ShortPackageLoc)_VER_MAJOR)
 PACKAGE_VER_MINOR?=$($(ShortPackageLoc)_VER_MINOR)
 PACKAGE_VER_PATCH?=$($(ShortPackageLoc)_VER_PATCH)
 
-ProjectBase?=$(BUILD_HOME)/$(Project)
-ConfigDir?=$(ProjectBase)/config
+ProjectPath?=$(BUILD_HOME)/$(Project)
+PackagePath?=$(ProjectPath)
+ConfigDir?=$(ProjectPath)/config
 
 BUILD_VERSION?=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[4];}' | awk '{split($$0,b,":"); print b[2];}')
 PREREL_VERSION?=$(shell $(ConfigDir)/tag2rel.sh | awk '{split($$0,a," "); print a[8];}' | awk '{split($$0,b,":"); print b[2];}' )
@@ -70,13 +68,37 @@ CC=gcc
 PACKAGE_FULL_VERSION ?= $(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR).$(PACKAGE_VER_PATCH)
 PACKAGE_NOARCH_RELEASE ?= $(BUILD_VERSION).$(GITREV)git
 
-.PHONY: default all _all
+PackageSourceDir    ?= $(PackagePath)/src
+PackageTestSourceDir?= $(PackagePath)/test
+PackageIncludeDir   ?= $(PackagePath)/include
+PackageLibraryDir   ?= $(PackagePath)/lib
+PackageExecDir      ?= $(PackagePath)/bin
+PackageObjectDir    ?= $(PackageSourceDir)/linux/$(Arch)
+
+.PHONY: default clean build all install uninstall
 
 default:
 
+clean:
+
+build:
+
+all: build
+
 ## Install should fail if the required variables are not set:
-# PackageLibraryDir, PackageIncludeDir, PackageExecDir, PackageSourceDir
-install: _all
+ifeq ($(and $(ThisIsAnEmptyVariable),$(PackageLibraryDir),$(PackageIncludeDir),$(PackageExecDir),$(PackageSourceDir)),)
+install build: fail
+fail:
+	@echo "build and install require that certain arguments are set"
+	@echo "ThisIsAnEmptyVariable is $(ThisIsAnEmptyVariable)"
+	@echo "PackageLibraryDir is $(PackageLibraryDir)"
+	@echo "PackageIncludeDir is $(PackageIncludeDir)"
+	@echo "PackageExecDir is $(PackageExecDir)"
+	@echo "PackageSourceDir is $(PackageSourceDir)"
+	@echo "Unable to run target due to unset variables"
+	@exit 2
+else
+install: all
 	echo "Executing install step"
 	$(MakeDir) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}
 	if [ -d $(PackagePath)/lib ]; then \
@@ -116,6 +138,7 @@ install: _all
 	fi
 
 	touch MAINTAINER.md CHANGELOG.md README.md LICENSE
+endif
 
 uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}
@@ -124,3 +147,9 @@ uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/share/doc/$(Package)-$(PACKAGE_FULL_VERSION)
 #	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)
 
+## Unfortunately, only picks up the targets listed in the Makefile that was invoked
+.PHONY: help
+help:
+	$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | \
+	    awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | \
+	    sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'

@@ -5,8 +5,10 @@
 ## xdaq/config/mfSetupRPM.rules
 ## xdaq/config/mfExternRPM.rules
 
-RPM_DIR=$(PackagePath)/rpm
-RPMBUILD_DIR=$(RPM_DIR)/RPMBUILD
+ProjectPath?=$(BUILD_HOME)/$(Project)
+PackagePath?=$(ProjectPath)
+RPM_DIR:=$(PackagePath)/rpm
+RPMBUILD_DIR:=$(RPM_DIR)/RPMBUILD
 
 ifndef BUILD_COMPILER
 BASE_COMPILER  =$(word 1, $(shell $(CC) --version))
@@ -16,7 +18,7 @@ endif
 
 ifndef PACKAGE_FULL_RELEASE
 # would like to use the correct %?{dist}
-PACKAGE_FULL_RELEASE = $(BUILD_VERSION).$(GITREV)git.$(GEM_OS).$(BUILD_COMPILER)
+PACKAGE_FULL_RELEASE=$(BUILD_VERSION).$(GITREV)git.$(GEM_OS).$(BUILD_COMPILER)
 endif
 
 ifndef REQUIRED_PACKAGE_LIST
@@ -42,19 +44,22 @@ ifeq ($(Arch),arm)
     RPM_OPTIONS=--define "_binary_payload 1"
 endif
 
-.PHONY: rpm _rpmall
-rpm: _rpmall
-_rpmall: _all _spec_update _rpmbuild
+.PHONY: rpm rpmprep
+rpm: _spec_update _rpmbuild _rpmharvest
+#rpm: _rpmharvest
 
-.PHONY: _rpmbuild _rpmprep
-_rpmbuild: _spec_update _rpmprep
+.PHONY: _rpmbuild _rpmharvest
+_rpmbuild: all _spec_update rpmprep
 	$(MakeDir) $(RPMBUILD_DIR)/{RPMS/{arm,noarch,i586,i686,x86_64},SPECS,BUILD,SOURCES,SRPMS}
 	rpmbuild --quiet -ba -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
 	    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
-	    --define  "_topdir $(RPMBUILD_DIR)" $(RPM_DIR)/$(PackageName).spec \
-    $(RPM_OPTIONS) --target "$(Arch)"
+	    --define  "_topdir $(RPMBUILD_DIR)" \
+	    $(RPM_DIR)/$(PackageName).spec \
+	    $(RPM_OPTIONS) --target "$(Arch)"
+
+_rpmharvest: _rpmbuild
 	find  $(RPMBUILD_DIR) -name "*.rpm" -exec mv {} $(RPM_DIR)/ \;
 
 .PHONY: _spec_update
@@ -107,7 +112,9 @@ _spec_update:
 	fi
 
 
-.PHONY: cleanrpm _cleanrpm
-cleanrpm: _cleanrpm
-_cleanrpm:
-	-rm -rf $(RPMBUILD_DIR)
+.PHONY: cleanrpm cleanallrpm
+cleanrpm:
+	$(RM) $(RPMBUILD_DIR)
+
+cleanallrpm:
+	$(RM) $(RPM_DIR)
