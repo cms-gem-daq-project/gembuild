@@ -18,16 +18,43 @@ IncludeDirs+=$(PYTHON_INCLUDE_PREFIX)
 # DynamicLinkFlags+=
 
 .PHONY: install-pip install-site uninstall-pip uninstall-site
-install-pip: pip
-# reg_interface_gem-3.2.2-final.dev106.zip
-	pip install $(RPM_DIR)/$(PackageName)-$(PACKAGE_FULL_VERSION)$(PREREL_VERSION).zip
 
-install-site:
+install-pip: pip
+ifneq ($(or $(ThisIsAnEmptyVariable),$(RPM_DIR),$(PackageName),$(PACKAGE_FULL_VERSION),$(PREREL_VERSION)),)
+	pip install $(RPM_DIR)/$(PackageName)-$(PACKAGE_FULL_VERSION)$(PREREL_VERSION).zip
+else
+	@echo "install-pip require that certain arguments are set"
+	@echo "ThisIsAnEmptyVariable is $(ThisIsAnEmptyVariable)"
+	@echo "RPM_DIR is $(RPM_DIR)"
+	@echo "PackageName is $(PackageName)"
+	@echo "PACKAGE_FULL_VERSION is $(PACKAGE_FULL_VERSION)"
+	@echo "PREREL_VERSION is $(PREREL_VERSION)"
+	@exit 2
+#	$(error "Unable to run install-site due to unset variables")
+endif
+
+ifeq ($(and $(ThisIsAnEmptyVariable),$(Namespace),$(ShortPackage),$(INSTALL_PREFIX),$(PYTHON_SITE_PREFIX)),)
+install-site uninstall-site: fail-pyinstall
+fail-pyinstall:
+	@echo "install-site require that certain arguments are set"
+	@echo "ThisIsAnEmptyVariable is $(ThisIsAnEmptyVariable)"
+	@echo "Namespace is $(Namespace)"
+	@echo "ShortPackage is $(ShortPackage)"
+	@echo "INSTALL_PREFIX is $(INSTALL_PREFIX)"
+	@echo "PYTHON_SITE_PREFIX is $(PYTHON_SITE_PREFIX)"
+	@exit 2
+#	$(error "Unable to run install-site due to unset variables")
+endif
+
+install-site: _rpmprep
 ifneq ($(Arch),arm)
 	$(MakeDir) $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)
 	@if [ -d pkg ]; then \
 	   cd pkg; \
-	   find $(Namespace) -type f -exec install -D -m 755 {} $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)/{} \; ; \
+	   find $(Namespace) \( -type d -iname scripts \) -prune -o -type f \
+	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/{} \; ; \
+	   find $(Namespace)/scripts -type f \
+	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(CMSGEMOS_ROOT)/bin/$(ShortPackage)/{} \; ; \
 	fi
 endif
 

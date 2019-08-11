@@ -7,7 +7,7 @@ CFLAGS= -fomit-frame-pointer -pipe -fno-common -fno-builtin \
 	-march=armv7-a -mfpu=neon -mfloat-abi=hard \
 	-mthumb-interwork -mtune=cortex-a9 \
 	-DEMBED -Dlinux -D__linux__ -Dunix -fPIC \
-	--sysroot=$(PETA_STAGE)\
+	--sysroot=$(PETA_STAGE) \
 	-I$(PETA_STAGE)/usr/include \
 	-I$(PETA_STAGE)/include
 
@@ -15,10 +15,7 @@ LDLIBS= -L$(PETA_STAGE)/lib \
 	-L$(PETA_STAGE)/usr/lib \
 	-L$(PETA_STAGE)/ncurses
 
-LDFLAGS= -g \
-	-L$(PETA_STAGE)/lib \
-	-L$(PETA_STAGE)/usr/lib \
-	-L$(PETA_STAGE)/ncurses
+LDFLAGS= -g $(LDLIBS)
 
 INSTALL_PATH=/mnt/persistent/$(Project)
 

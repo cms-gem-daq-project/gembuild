@@ -1,38 +1,31 @@
 # Created with insights from
 ## amc13/config/mfPythonRPMRules.mk
 
-INSTALL_PATH?=/opt/$(Project)
-
-ProjectPath ?= $(BUILD_HOME)/$(Project)
-PackagePath ?= $(BUILD_HOME)/$(Project)
-RPM_DIR      = $(PackagePath)/rpm
-RPMBUILD_DIR = $(RPM_DIR)/build
-#
+ProjectPath?=$(BUILD_HOME)/$(Project)
+PackagePath?=$(ProjectPath)
+RPM_DIR:=$(PackagePath)/rpm
+RPMBUILD_DIR:=$(RPM_DIR)/build
 
 ifndef PACKAGE_FULL_RELEASE
-PACKAGE_FULL_RELEASE ?= $(PACKAGE_NOARCH_RELEASE).$(GEM_OS)
+PACKAGE_FULL_RELEASE?=$(PACKAGE_NOARCH_RELEASE).$(GEM_OS)
 endif
 
 ifndef PythonModules
 $(error Python module names missing "PythonModules")
 endif
 
-.PHONY: pip _sdistbuild _harvest
+.PHONY: pip rpm rpmprep
 pip: _sdistbuild _harvest
-	@echo "Running pip target"
 
-.PHONY: rpm _rpmall _rpmprep _setup_update _rpmbuild _rpmdevbuild _rpmsetup _bdistbuild _sdistbuild
-rpm: _rpmall _harvest
-	@echo "Running rpm target"
-	find $(RPMBUILD_DIR) -iname "*.rpm" -print0 -exec mv -t $(RPM_DIR) {} \+
+rpm: _rpmbuild _harvest
 
-#_rpmall: _all _rpmprep _setup_update _rpmsetup _rpmbuild
-_rpmall: _all _rpmbuild
-	@echo "Running _rpmall target"
+.PHONY: _sdistbuild _bdistbuild _sdistbuild
+.PHONY: _harvest _setup_update _rpmbuild _rpmsetup
+
 # Copy the package skeleton
 # Ensure the existence of the module directory
 # Copy the libraries into python module
-_rpmsetup: _rpmprep _setup_update
+_rpmsetup: rpmprep _setup_update
 # Change directory into pkg and copy everything into rpm build dir
 	@echo "Running _rpmsetup target"
 	cd pkg && \
@@ -40,13 +33,13 @@ _rpmsetup: _rpmprep _setup_update
 # Add a manifest file (may not be necessary
 #	echo "include */*.so" > $(RPMBUILD_DIR)/MANIFEST.in
 
-_rpmbuild: _sdistbuild
+_rpmbuild: all _sdistbuild
 	@echo "Running _rpmbuild target"
 	cd $(RPMBUILD_DIR) && python setup.py bdist_rpm \
 	    --release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION) \
 	    --force-arch=noarch
 
-_rpmarm: _rpmsetup
+_rpmarm: all _rpmsetup
 	@echo "Running _rpmarm target"
 	cd $(RPMBUILD_DIR) && python setup.py sdist --formats=gztar \
 	    bdist_rpm --quiet \
@@ -72,7 +65,6 @@ _sdistbuild: _rpmsetup
 	    sdist --formats=bztar,gztar,zip
 
 _harvest:
-# Harvest the crop
 	find $(RPMBUILD_DIR)/dist \( -iname "*.tar.gz" \
 	    -o -iname "*.tar.bz2" \
 	    -o -iname "*.tgz" \
@@ -191,10 +183,9 @@ _setup_update:
 	sed -i 's#___builddate___#$(BUILD_DATE)#'         $(RPMBUILD_DIR)/setup.cfg
 
 
-.PHONY: cleanrpm _cleanrpm
-cleanrpm: _cleanrpm
-	@echo "Running cleanrpm target"
+.PHONY: cleanrpm cleanallrpm
+cleanrpm:
+	$(RM) $(RPMBUILD_DIR)
 
-_cleanrpm:
-	@echo "Running _cleanrpm target"
-	@rm -rf rpm
+cleanallrpm:
+	$(RM) $(RPM_DIR)

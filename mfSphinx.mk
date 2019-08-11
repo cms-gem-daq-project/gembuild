@@ -4,8 +4,7 @@
 # You can set these variables from the command line.
 DOCBASE	      = doc
 SPHINXOPTS    =
-#SPHINXBUILD   = python $(shell which sphinx-build)
-SPHINXBUILD   = ~/.local/bin/sphinx-build #temporary hack
+SPHINXBUILD   = python $(shell which sphinx-build)
 PAPER         =
 SOURCEDIR     = $(DOCBASE)
 BUILDDIR      = $(DOCBASE)/_build
