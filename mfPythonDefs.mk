@@ -19,6 +19,7 @@ IncludeDirs+=$(PYTHON_INCLUDE_PREFIX)
 
 .PHONY: install-pip install-site uninstall-pip uninstall-site
 
+## @python-common install the python pip package
 install-pip: pip
 ifneq ($(or $(ThisIsAnEmptyVariable),$(RPM_DIR),$(PackageName),$(PACKAGE_FULL_VERSION),$(PREREL_VERSION)),)
 	pip install $(RPM_DIR)/$(PackageName)-$(PACKAGE_FULL_VERSION)$(PREREL_VERSION).zip
@@ -33,7 +34,7 @@ else
 #	$(error "Unable to run install-site due to unset variables")
 endif
 
-ifeq ($(and $(ThisIsAnEmptyVariable),$(Namespace),$(ShortPackage),$(INSTALL_PREFIX),$(PYTHON_SITE_PREFIX)),)
+ifeq ($(and $(ThisIsAnEmptyVariable),$(Namespace),$(ShortPackage),$(INSTALL_PREFIX),$(PYTHON_SITE_PREFIX),$(CMSGEMOS_ROOT)),)
 install-site uninstall-site: fail-pyinstall
 fail-pyinstall:
 	@echo "install-site require that certain arguments are set"
@@ -46,6 +47,7 @@ fail-pyinstall:
 #	$(error "Unable to run install-site due to unset variables")
 endif
 
+## @python-common install the python site-package
 install-site: _rpmprep
 ifneq ($(Arch),arm)
 	$(MakeDir) $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)
@@ -53,14 +55,17 @@ ifneq ($(Arch),arm)
 	   cd pkg; \
 	   find $(Namespace) \( -type d -iname scripts \) -prune -o -type f \
 	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/{} \; ; \
-	   find $(Namespace)/scripts -type f \
+	   cd $(Namespace)/scripts; \
+	   find . -type f \
 	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(CMSGEMOS_ROOT)/bin/$(ShortPackage)/{} \; ; \
 	fi
 endif
 
+## @python-common uninstall the python pip package
 uninstall-pip:
 	pip uninstall $(PackageName)
 
+## @python-common uninstall the python site-package
 uninstall-site:
 ifneq ($(Arch),arm)
 	$(RM) $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)

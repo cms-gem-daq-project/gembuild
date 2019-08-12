@@ -15,9 +15,12 @@ $(error Python module names missing "PythonModules")
 endif
 
 .PHONY: pip rpm rpmprep
+## @python-rpm Create a python package installable via pip
 pip: _sdistbuild _harvest
-
+## @python-rpm Create a python RPM package
 rpm: _rpmbuild _harvest
+## @python-rpm Perform any specific setup before packaging, is a dependency of both `pip` and `rpm`
+rpmprep:
 
 .PHONY: _sdistbuild _bdistbuild _sdistbuild
 .PHONY: _harvest _setup_update _rpmbuild _rpmsetup
