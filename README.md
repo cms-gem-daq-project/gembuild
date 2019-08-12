@@ -90,14 +90,28 @@ Extra definitions for building on a Xilinx `Zynq` SoC
 #### `setupTemplate.cfg`
 A generic `setup.cfg` file for `python` packages.
 The values will be populated based on variables at the time the rule is executed.
-This file will be ignored if a package specific template already exists.
+This file will be ignored if a package specific template already exists, searching in order:
+```
+$(PackagePath)/setup.cfg
+$(PackagePath)/pkg/setup.cfg
+$(ProjectPath)/config/setupTemplate.cfg
+```
 
 #### `setupTemplate.py`
 A generic `setup.py` file for `python` packages.
 The values will be populated based on variables at the time the rule is executed.
-This file will be ignored if a package specific template already exists.
+This file will be ignored if a package specific template already exists, searching in order:
+```
+$(PackagePath)/setup.py
+$(PackagePath)/pkg/setup.py
+$(ProjectPath)/config/setupTemplate.py
+```
 
 #### `specTemplate.spec`
 A generic `spec` file for building RPM packages.
 The values will be populated based on variables at the time the rule is executed.
-This file will be ignored if a package specific template already exists.
+This file will be ignored if a package specific template already exists, searching in order:
+```
+$(PackagePath)/spec.template
+$(ProjectPath)/config/specTemplate.spec
+```

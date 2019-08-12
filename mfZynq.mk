@@ -19,5 +19,9 @@ LDFLAGS= -g $(LDLIBS)
 
 INSTALL_PATH=/mnt/persistent/$(Project)
 
+GEM_PLATFORM:=xilinx-peta
+GEM_ARCH:=armv7l
+GEM_OS:=peta
+
 CXX:=arm-linux-gnueabihf-g++
 CC:=arm-linux-gnueabihf-gcc

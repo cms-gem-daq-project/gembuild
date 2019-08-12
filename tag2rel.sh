@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 ## Script to extract versioning information from a git tag
 usage(){
@@ -9,12 +9,18 @@ usage(){
     * Major is the current major version number
     * Minor is the current minor version number
     * Patch is the current patch version number
-    * Version(version) is the base X.Y.Z version of the tag which is the parent of the commit being built
     * Release(relver) is the release version added to an RPM i.e., X.Y.Z-relver (see https://fedoraproject.org/wiki/Package_Versioning_Examples for examples)
+    * Version(version) is the base X.Y.Z version of the tag which is the parent of the commit being built
     * FullVersion
     * TagVersion is the full name of the tag which is a parent of this commit
+    * BuildTag: 
     * Revision(gitrev) is the git revision hash of the commit
     * GitVersion(gitver) e.g., v0.99.0-pre10-2-g47878f-dirty
+    * Revision:${gitrev}
+    * GitVersion:${gitver}
+    * NextMajorVer:${NextMajorVer}
+    * NextMinorVer:${NextMinorVer}
+    * NextPatchVer:${NextPatchVer}
 Major:0 Minor:99 Patch:0 Release:0.3.pre10 Version:0.99.0 FullVersion:v0.99.0-pre10 TagVersion:v0.99.0 Revision:47878ff GitVersion:v0.99.0-pre10-2-g47878f-dirty
 
   Description:

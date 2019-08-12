@@ -6,10 +6,6 @@ PackagePath?=$(ProjectPath)
 RPM_DIR:=$(PackagePath)/rpm
 RPMBUILD_DIR:=$(RPM_DIR)/build
 
-ifndef PACKAGE_FULL_RELEASE
-PACKAGE_FULL_RELEASE?=$(PACKAGE_NOARCH_RELEASE).$(GEM_OS)
-endif
-
 ifndef PythonModules
 $(error Python module names missing "PythonModules")
 endif
@@ -38,18 +34,33 @@ _rpmsetup: rpmprep _setup_update
 
 _rpmbuild: all _sdistbuild
 	@echo "Running _rpmbuild target"
-	cd $(RPMBUILD_DIR) && python setup.py bdist_rpm \
-	    --release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION) \
-	    --force-arch=noarch
+	cd $(RPMBUILD_DIR) && python setup.py  sdist --formats=bztar,gztar,zip \
+	    bdist_rpm --quiet \
+	    --force-arch=$(GEM_ARCH) \
+	    --spec-only; \
+	mkdir -p $(RPMBUILD_DIR)/$(GEM_ARCH)/SOURCES
+	mv $(RPMBUILD_DIR)/dist/*.tar.gz $(RPMBUILD_DIR)/$(GEM_ARCH)/SOURCES/
+	sed -i '/%define release/d' $(RPMBUILD_DIR)/dist/${PackageName}.spec
+	rpmbuild --quiet -bs --clean \
+	    --define "release $(PACKAGE_NOARCH_RELEASE)" \
+	    --define "_binary_payload 1" \
+	    --define "_topdir $(RPMBUILD_DIR)/$(GEM_ARCH)" \
+	    $(RPMBUILD_DIR)/dist/${PackageName}.spec; \
+	rpmbuild --quiet -bb --clean \
+	    --define "release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION)" \
+	    --define "_binary_payload 1" \
+	    --define "_topdir $(RPMBUILD_DIR)/$(GEM_ARCH)" \
+	    $(RPMBUILD_DIR)/dist/${PackageName}.spec
+	rename $(PACKAGE_FULL_VERSION) $(PACKAGE_FULL_VERSION)_$(PACKAGE_NOARCH_RELEASE) $(RPMBUILD_DIR)/$(GEM_ARCH)/SOURCES/*$(PACKAGE_FULL_VERSION).tar.gz
 
 _rpmarm: all _rpmsetup
 	@echo "Running _rpmarm target"
 	cd $(RPMBUILD_DIR) && python setup.py sdist --formats=gztar \
 	    bdist_rpm --quiet \
 	    --release $(PACKAGE_NOARCH_RELEASE).peta_linux.python$(PYTHON_VERSION) \
-	    --force-arch=noarch --spec-only
+	    --force-arch=$(GEM_ARCH) --spec-only
 	mkdir -p $(RPMBUILD_DIR)/arm/SOURCES
-	cp $(RPMBUILD_DIR)/dist/*.tar.gz $(RPMBUILD_DIR)/arm/SOURCES/
+	mv $(RPMBUILD_DIR)/dist/*.tar.gz $(RPMBUILD_DIR)/arm/SOURCES/
 	rpmbuild --quiet -bb --clean \
 	    --define "_binary_payload 1" \
 	    --define "_topdir $(RPMBUILD_DIR)/arm" \
@@ -68,12 +79,7 @@ _sdistbuild: _rpmsetup
 	    sdist --formats=bztar,gztar,zip
 
 _harvest:
-	find $(RPMBUILD_DIR)/dist \( -iname "*.tar.gz" \
-	    -o -iname "*.tar.bz2" \
-	    -o -iname "*.tgz" \
-	    -o -iname "*.zip" \
-	    -o -iname "*.tbz2" \) -print0 -exec mv -t $(RPM_DIR)/ {} \+
-	-rename tar. t $(RPM_DIR)/*tar*
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
 
 _setup_update:
 	@echo "Running _setup_update target"
@@ -87,26 +93,10 @@ _setup_update:
 	    echo "Found $(PackagePath)/pkg/setup.py"; \
 	    echo "$(PackagePath)/pkg/setup.py $(RPMBUILD_DIR)/setup.py"; \
 	    cp $(PackagePath)/pkg/setup.py $(RPMBUILD_DIR)/setup.py; \
-	elif [ -e $(PackagePath)/setup/setup.py ]; then \
-	    echo "Found $(PackagePath)/setup/setup.py"; \
-	    echo "$(PackagePath)/setup/setup.py $(RPMBUILD_DIR)/setup.py"; \
-	    cp $(PackagePath)/setup/setup.py $(RPMBUILD_DIR)/setup.py; \
-	elif [ -e $(PackagePath)/setup/build/setup.py ]; then \
-	    echo "Found $(PackagePath)/setup/build/setup.py"; \
-	    echo "$(PackagePath)/setup/build/setup.py $(RPMBUILD_DIR)/setup.py"; \
-	    cp $(PackagePath)/setup/build/setup.py $(RPMBUILD_DIR)/setup.py; \
-	elif [ -e $(ProjectPath)/setup/config/setupTemplate.py ]; then \
-	    echo "Found $(ProjectPath)/setup/config/setupTemplate.py"; \
-	    echo "$(ProjectPath)/setup/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py"; \
-	    cp $(ProjectPath)/setup/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
 	elif [ -e $(ProjectPath)/config/setupTemplate.py ]; then \
 	    echo "Found $(ProjectPath)/config/setupTemplate.py"; \
 	    echo "$(ProjectPath)/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py"; \
 	    cp $(ProjectPath)/config/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
-	elif [ -e $(BUILD_HOME)/config/build/setupTemplate.py ]; then \
-	    echo "Found $(BUILD_HOME)/config/build/setupTemplate.py"; \
-	    echo "$(BUILD_HOME)/config/build/setupTemplate.py $(RPMBUILD_DIR)/setup.py"; \
-	    cp $(BUILD_HOME)/config/build/setupTemplate.py $(RPMBUILD_DIR)/setup.py; \
 	else \
 	    echo "Unable to find any setupTemplate.py"; \
 	    exit 2; \
@@ -140,26 +130,10 @@ _setup_update:
 	    echo "Found $(PackagePath)/pkg/setup.cfg"; \
 	    echo "$(PackagePath)/pkg/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
 	    cp $(PackagePath)/pkg/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
-	elif [ -e $(PackagePath)/setup/setup.cfg ]; then \
-	    echo "Found $(PackagePath)/setup/setup.cfg"; \
-	    echo "$(PackagePath)/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
-	    cp $(PackagePath)/setup/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
-	elif [ -e $(PackagePath)/setup/build/setup.cfg ]; then \
-	    echo "Found $(PackagePath)/setup/build/setup.cfg"; \
-	    echo "$(PackagePath)/setup/build/setup.cfg $(RPMBUILD_DIR)/setup.cfg"; \
-	    cp $(PackagePath)/setup/build/setup.cfg $(RPMBUILD_DIR)/setup.cfg; \
-	elif [ -e $(ProjectPath)/setup/config/setupTemplate.cfg ]; then \
-	    echo "Found $(ProjectPath)/setup/config/setupTemplate.cfg"; \
-	    echo "$(ProjectPath)/setup/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg"; \
-	    cp $(ProjectPath)/setup/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	elif [ -e $(ProjectPath)/config/setupTemplate.cfg ]; then \
 	    echo "Found $(ProjectPath)/config/setupTemplate.cfg"; \
 	    echo "$(ProjectPath)/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg"; \
 	    cp $(ProjectPath)/config/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
-	elif [ -e $(BUILD_HOME)/config/build/setupTemplate.cfg ]; then \
-	    echo "Found $(BUILD_HOME)/config/setupTemplate.cfg"; \
-	    echo "$(BUILD_HOME)/config/build/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg"; \
-	    cp $(BUILD_HOME)/config/build/setupTemplate.cfg $(RPMBUILD_DIR)/setup.cfg; \
 	else \
 	    echo "Unable to find any setupTemplate.cfg"; \
 	    exit 2; \

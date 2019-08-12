@@ -2,7 +2,7 @@
 %define _longpackage __longpackage__
 %define _packagename __packagename__
 %define _version __version__
-%define _release __release__
+%define _short_release __short_release__
 %define _prefix  __prefix__
 %define _sources_dir __sources_dir__
 %define _tmppath /tmp
@@ -18,8 +18,9 @@
 
 %define _unpackaged_files_terminate_build 0
 
-%define add_arm_libs %( if [ -d 'lib/arm' ]; then echo "1" ; else echo "0"; fi )
+%define add_arm_libs %( if [ -d '%{_packagedir}lib/arm' ]; then echo "1" ; else echo "0"; fi )
 %define is_arm  %( if [[ '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
+%define not_arm  %( if [[ ! '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
 
 %global _find_debuginfo_opts -g
 
@@ -31,10 +32,10 @@ Summary: %{_summary}
 Version: %{_version}
 Release: %{_release}
 Packager: %{_author}
-#BuildArch: %{_buildarch}
-License: __license_
-# Group: Applications/extern
+# BuildArch: %{_buildarch}
+License: __license__
 URL: %{_url}
+# Source: %{_source_url}/%{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2
 BuildRoot: %{_tmppath}/%{_packagename}-%{_version}-%{_release}-buildroot
 Prefix: %{_prefix}
 Requires: __requires_list__
@@ -46,6 +47,8 @@ AutoReq: no
 %description
 __description__
 
+## Only build devel and debuginfo RPMs for non-ARM
+%if %not_arm
 %package -n %{_packagename}-devel
 Summary: Development package for %{_summary}
 Requires: %{_packagename}
@@ -59,18 +62,21 @@ Requires: %{_packagename}
 
 %description -n %{_packagename}-debuginfo
 __description__
+%endif
 
 # %pre
 
 %prep
 ## if there is a Source tag that points to the tarball
 #%%setup -q
-cp %{_sourcedir}/%{_project}-%{_longpackage}-%{_version}.tbz2 ./
-tar xjf %{_project}-%{_longpackage}-%{_version}.tbz2
+ls -l %{_sourcedir}
+ls -l ./
+mv %{_sourcedir}/%{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2 ./
+tar xjf %{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2
 
 %build
 cd %{_project}/%{_packagename}
-make -j4
+make build -j4
 
 #
 # Prepare the list of files that are the input to the binary and devel RPMs
@@ -79,7 +85,7 @@ make -j4
 rm -rf %{buildroot}
 pushd %{_project}/%{_packagename}
 INSTALL_PREFIX=%{buildroot} make install
-touch ChangeLog README LICENSE MAINTAINER
+touch ChangeLog README LICENSE MAINTAINER CHANGELOG.md
 popd
 
 ## Manually run find-debuginfo because...?
@@ -94,27 +100,31 @@ rm -rf %{buildroot}
 #
 %files
 %defattr(-,root,root,0755)
-%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/CHANGELOG.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/LICENSE
 %attr(0755,root,root) %{_prefix}/lib/*.so
 
 %dir
 %{_prefix}/bin
 %{_prefix}/scripts
 
+%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md
+%license %{_project}/%{_packagename}/LICENSE
+
+## Only build devel and debuginfo RPMs for non-ARM
+%if %not_arm
 #
 # Files that go in the devel RPM
 #
 
-## Want to exclude all files in lib/arm from being scanned for dependencies, but need to make sure this doesn't break other packages
 # Do not check any files in lib/arm for requires
-%global __requires_exclude_from ^%{_prefix}/lib/arm/.*$
-
 # Do not check .so files in an arm-specific library directory for provides
-%global __provides_exclude_from ^%{_prefix}/lib/arm/*\\.so$
+%define __requires_exclude_from ^%{_prefix}/lib/arm/.*$
+%define __provides_exclude_from ^%{_prefix}/lib/arm/.*$
+%define __requires_exclude ^%{_prefix}/lib/arm/.*\\.so$
+%define __provides_exclude ^%{_prefix}/lib/arm/.*\\.so$
 
 %files -n %{_packagename}-devel
 %defattr(-,root,root,0755)
-%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/CHANGELOG.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/LICENSE
+
 %if %add_arm_libs
 %attr(0755,root,root) %{_prefix}/lib/arm/*.so
 %endif
@@ -122,16 +132,22 @@ rm -rf %{buildroot}
 %dir
 %{_prefix}/include
 
+%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md
+%license %{_project}/%{_packagename}/LICENSE
 #
 # Files that go in the debuginfo RPM
 #
 %files -n %{_packagename}-debuginfo
 %defattr(-,root,root,0755)
-%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/CHANGELOG.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/LICENSE
 
 %dir
 /usr/lib/debug
 /usr/src/debug
+
+%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md
+%license %{_project}/%{_packagename}/LICENSE
+
+%endif
 
 %post
 
@@ -140,4 +156,3 @@ rm -rf %{buildroot}
 %postun
 
 %changelog
-

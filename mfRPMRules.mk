@@ -9,6 +9,7 @@ ProjectPath?=$(BUILD_HOME)/$(Project)
 PackagePath?=$(ProjectPath)
 RPM_DIR:=$(PackagePath)/rpm
 RPMBUILD_DIR:=$(RPM_DIR)/RPMBUILD
+URL:=https://gitlab.cern.ch/cms-gem-daq-project/$(Project)
 
 ifndef BUILD_COMPILER
 BASE_COMPILER  =$(word 1, $(shell $(CC) --version))
@@ -18,7 +19,7 @@ endif
 
 ifndef PACKAGE_FULL_RELEASE
 # would like to use the correct %?{dist}
-PACKAGE_FULL_RELEASE=$(BUILD_VERSION).$(GITREV)git.$(GEM_OS).$(BUILD_COMPILER)
+PACKAGE_FULL_RELEASE=$(PACKAGE_NOARCH_RELEASE).$(GEM_OS).$(BUILD_COMPILER)
 endif
 
 ifndef REQUIRED_PACKAGE_LIST
@@ -40,7 +41,7 @@ BUILD_REQUIRES_LIST=1
 endif
 
 RPM_OPTIONS=
-ifeq ($(Arch),arm)
+ifeq ($(GEM_ARCH),arm)
     RPM_OPTIONS=--define "_binary_payload 1"
 endif
 
@@ -53,17 +54,28 @@ rpmprep:
 
 .PHONY: _rpmbuild _rpmharvest
 _rpmbuild: all _spec_update rpmprep
-	$(MakeDir) $(RPMBUILD_DIR)/{RPMS/{arm,noarch,i586,i686,x86_64},SPECS,BUILD,SOURCES,SRPMS}
-	rpmbuild --quiet -ba -bl \
+	$(MakeDir) $(RPMBUILD_DIR)/{RPMS,SPECS,BUILD,SOURCES,SRPMS}
+	rpmbuild --quiet -bs -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
+	    --define "_release $(PACKAGE_NOARCH_RELEASE)" \
 	    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
 	    --define  "_topdir $(RPMBUILD_DIR)" \
 	    $(RPM_DIR)/$(PackageName).spec \
-	    $(RPM_OPTIONS) --target "$(Arch)"
+	    $(RPM_OPTIONS) --target "$(GEM_ARCH)"; \
+	tree -f $(RPMBUILD_DIR)/SRPMS; \
+	rpmbuild --quiet -bb -bl \
+	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
+	    --define "_requires $(REQUIRES_LIST)" \
+	    --define "_release $(PACKAGE_FULL_RELEASE)" \
+	    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
+	    --define  "_topdir $(RPMBUILD_DIR)" \
+	    $(RPM_DIR)/$(PackageName).spec \
+	    $(RPM_OPTIONS) --target "$(GEM_ARCH)"; \
+	tree -f $(RPMBUILD_DIR)/RPMS;
 
 _rpmharvest: _rpmbuild
-	find  $(RPMBUILD_DIR) -name "*.rpm" -exec mv {} $(RPM_DIR)/ \;
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
 
 .PHONY: _spec_update
 _spec_update:
@@ -87,6 +99,7 @@ _spec_update:
 	sed -i 's#__longpackage__#$(LongPackage)#'                         $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__packagename__#$(PackageName)#'                         $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__version__#$(PACKAGE_FULL_VERSION)#'                    $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__short_release__#$(PACKAGE_NOARCH_RELEASE)#'            $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__release__#$(PACKAGE_FULL_RELEASE)#'                    $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__prefix__#$(INSTALL_PATH)#'                             $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__sources_dir__#$(RPMBUILD_DIR)/SOURCES#'                $(RPM_DIR)/$(PackageName).spec
@@ -97,8 +110,8 @@ _spec_update:
 	sed -i 's#__author__#$(Packager)#'                                 $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__summary__#None#'                                       $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__description__#None#'                                   $(RPM_DIR)/$(PackageName).spec
-	sed -i 's#__url__#None#'                                           $(RPM_DIR)/$(PackageName).spec
-	sed -i 's#__buildarch__#$(Arch)#'                                  $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__url__#$(URL)#'                                         $(RPM_DIR)/$(PackageName).spec
+	sed -i 's#__buildarch__#$(GEM_ARCH)#'                              $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__requires_list__#$(REQUIRED_PACKAGE_LIST)#'             $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__build_requires_list__#$(BUILD_REQUIRED_PACKAGE_LIST)#' $(RPM_DIR)/$(PackageName).spec
 

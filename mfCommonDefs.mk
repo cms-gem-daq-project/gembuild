@@ -9,6 +9,7 @@ XDAQ_ROOT?=/opt/xdaq
 XHAL_ROOT?=/opt/xhal
 
 GEM_PLATFORM := $(shell python -c "import platform; print(platform.platform())")
+GEM_ARCH     := $(shell uname -m)
 GEM_OS       := "unknown.os"
 
 GIT_VERSION  := $(shell git describe --dirty --always --tags)
@@ -75,7 +76,7 @@ PackageLibraryDir   ?= $(PackagePath)/lib
 PackageExecDir      ?= $(PackagePath)/bin
 PackageObjectDir    ?= $(PackageSourceDir)/linux/$(Arch)
 
-.PHONY: default clean cleanall build all install uninstall
+.PHONY: default clean cleanall build all install uninstall release
 
 ## @common default target, no dependencies
 default:
@@ -156,6 +157,10 @@ uninstall:
 	$(RM) $(INSTALL_PREFIX)/usr/src/debug/$(Package)-$(PACKAGE_FULL_VERSION)
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/share/doc/$(Package)-$(PACKAGE_FULL_VERSION)
 #	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)
+
+## @common prepare generated packages for a release
+release: rpm
+	-rsync -ahcX --progress --partial $(RPM_DIR)/repos $(ProjectPath)/
 
 # COLORS
 GREEN  := $(shell tput -Txterm setaf 2)
