@@ -46,7 +46,7 @@ $(info OS Detected: $(GEM_OS))
 MakeDir=mkdir -p
 RM=rm -rf
 
-## Version variables from Makefile and ShortPackage
+# Version variables from Makefile and ShortPackage
 ShortPackageLoc:=$(shell echo "$(ShortPackage)" | tr '[:lower:]' '[:upper:]')
 PACKAGE_VER_MAJOR?=$($(ShortPackageLoc)_VER_MAJOR)
 PACKAGE_VER_MINOR?=$($(ShortPackageLoc)_VER_MINOR)
@@ -75,18 +75,25 @@ PackageLibraryDir   ?= $(PackagePath)/lib
 PackageExecDir      ?= $(PackagePath)/bin
 PackageObjectDir    ?= $(PackageSourceDir)/linux/$(Arch)
 
-.PHONY: default clean build all install uninstall
+.PHONY: default clean cleanall build all install uninstall
 
+## @common default target, no dependencies
 default:
 
+## @common clean compiled objects
 clean:
 
+## @common clean everything (objects, docs, packages)
+cleanall: clean cleandoc cleanallrpm
+
+## @common build package
 build:
 
+## @common Run all necessary steps to build complete package
 all: build
 
-## Install should fail if the required variables are not set:
-ifeq ($(and $(ThisIsAnEmptyVariable),$(PackageLibraryDir),$(PackageIncludeDir),$(PackageExecDir),$(PackageSourceDir)),)
+# Install should fail if the required variables are not set:
+ifeq ($(and $(PackageLibraryDir),$(PackageIncludeDir),$(PackageExecDir),$(PackageSourceDir)),)
 install build: fail
 fail:
 	@echo "build and install require that certain arguments are set"
@@ -98,6 +105,7 @@ fail:
 	@echo "Unable to run target due to unset variables"
 	@exit 2
 else
+## @common install package to `INSTALL_PREFIX`
 install: all
 	echo "Executing install step"
 	$(MakeDir) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}
@@ -105,7 +113,8 @@ install: all
 	   cd $(PackagePath)/lib; \
 	   find . -name "*.so" -exec install -D -m 755 {} $(INSTALL_PREFIX)$(INSTALL_PATH)/lib/{} \; ; \
 	fi
-#	   find . -type l -exec sh -c 'ln -s -f ${INSTALL_PREFIX}$(INSTALL_PATH)/lib/$(basename $(readlink $0)) ${INSTALL_PREFIX}${INSTALL_PATH}/lib/$0' {} \;
+#	   find . -type l -exec sh -c 'ln -s -f ${INSTALL_PREFIX}$(INSTALL_PATH)/lib/$(basename $(readlink $0)) \
+	       ${INSTALL_PREFIX}${INSTALL_PATH}/lib/$0' {} \;
 
 	if [ -d $(PackagePath)/include ]; then \
 	   cd $(PackagePath)/include; \
@@ -140,6 +149,7 @@ install: all
 	touch MAINTAINER.md CHANGELOG.md README.md LICENSE
 endif
 
+## @common uninstall package from `INSTALL_PREFIX`
 uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}
 	$(RM) $(INSTALL_PREFIX)/usr/lib/debug$(INSTALL_PATH)/{bin,lib}
@@ -147,9 +157,57 @@ uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/share/doc/$(Package)-$(PACKAGE_FULL_VERSION)
 #	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)
 
-## Unfortunately, only picks up the targets listed in the Makefile that was invoked
-.PHONY: help
-help:
-	$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | \
-	    awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | \
-	    sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+# COLORS
+GREEN  := $(shell tput -Txterm setaf 2)
+YELLOW := $(shell tput -Txterm setaf 3)
+BLUE   := $(shell tput -Txterm setaf 4)
+RED    := $(shell tput -Txterm setaf 5)
+WHITE  := $(shell tput -Txterm setaf 7)
+RESET  := $(shell tput -Txterm sgr0)
+
+# ideas from https://gist.github.com/prwhite/8168133
+## Show help
+help: | help-prefix help-targets
+
+help-prefix:
+	@echo 'Usage:'
+	@echo '  $(GREEN)make$(RESET) $(YELLOW)<target>$(RESET)'
+	@echo '  $(GREEN)make$(RESET) $(YELLOW)<target>$(RESET) $(BLUE)<VAR>$(RESET)=$(RED)<value>$(RESET)'
+	@echo ''
+
+# --- helper
+
+HELP_TARGET_MAX_CHAR_NUM = 20
+help-targets:
+	@awk '/^[a-zA-Z\-\_0-9]+:/ \
+		{ \
+			helpMessage = match(lastLine, /^## (.*)/); \
+			if (helpMessage) { \
+				helpCommand = substr($$1, 0, index($$1, ":")-1); \
+				helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
+				helpGroup = match(helpMessage, /^@([^ ]*)/); \
+				if (helpGroup) { \
+					helpGroup = substr(helpMessage, RSTART + 1, index(helpMessage, " ")-2); \
+					helpMessage = substr(helpMessage, index(helpMessage, " ")+1); \
+				} \
+				printf "%s|  $(YELLOW)%-$(HELP_TARGET_MAX_CHAR_NUM)s$(RESET) %s\n", \
+					helpGroup, helpCommand, helpMessage; \
+			} \
+		} \
+		{ lastLine = $$0 }' \
+		$(MAKEFILE_LIST) \
+	| sort -t'|' -sk1,1 \
+	| awk -F '|' ' \
+			{ \
+			cat = $$1; \
+			if (cat != lastCat || lastCat == "") { \
+				if ( cat == "0" ) { \
+					print "Targets:" \
+				} else { \
+					gsub("_", " ", cat); \
+					printf "\nTargets for %s:\n", cat; \
+				} \
+			} \
+			print $$2 \
+		} \
+		{ lastCat = $$1 }'

@@ -45,8 +45,11 @@ ifeq ($(Arch),arm)
 endif
 
 .PHONY: rpm rpmprep
+## @rpm performs all steps necessary to generate RPM packages
 rpm: _spec_update _rpmbuild _rpmharvest
-#rpm: _rpmharvest
+
+## @rpm Perform any specific setup before packaging, is an implicit dependency of `rpm`
+rpmprep:
 
 .PHONY: _rpmbuild _rpmharvest
 _rpmbuild: all _spec_update rpmprep
@@ -113,8 +116,10 @@ _spec_update:
 
 
 .PHONY: cleanrpm cleanallrpm
+## @rpm Clean up the rpm build directory
 cleanrpm:
 	$(RM) $(RPMBUILD_DIR)
 
-cleanallrpm:
+## @rpm Entirely remove the rpm directory
+cleanallrpm: cleanrpm
 	$(RM) $(RPM_DIR)
