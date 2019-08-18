@@ -28,19 +28,33 @@ Most common definitions needed, and basic targets.
   * `BUILD_DATE`: the date
   * `BUILD_VERSION`: will be used as the `Release`, and is extracted using `tag2rel.sh`
   * `PREREL_VERSION`: will be used as part of the `pip` package name, and is extracted using `tag2rel.sh`
-* Package structure variables:
-  * `INSTALL_PATH` is the base directory of the installed project, defaults to `/opt/$(Project)`
-  * `ProjectPath` is the base directory of the project, defaults to `$(BUILD_HOME)/$(Project)`
-  * `PackagePath` is the base directory of the package, defaults to `$(ProjectPath)`
-  * `PackageIncludeDir`: location of the headers, defaults to `$(PackagePath)/include`
-  * `PackageSourceDir`: location of the source files, defaults to `$(PackagePath)/src`
-  * `PackageTestSourceDir`: location of source files to build into executables, defaults to `$(PackagePath)/test`
-  * `PackageLibraryDir`: location of library files, defaults to `$(PackagePath)/lib`
-  * `PackageExecDir`: location of executables, defaults to `$(PackagePath)/bin`
-  * `PackageObjectDir`: location of object files, defaults to `$(PackageSourceDir)/linux/$(Arch)`
-* Defines `default`, `clean`, `build`, `doc`, `all`, `install` and `uninstall` `make` targets
+
+##### `UseSONAMEs`
+This variable is be used to determine whether or not the libraries will be compiled with the `soname` option, default is yes, and in that case, the following variables will be set:
+* `LibrarySONAME` will be set to `$(@F).$(PACKAGE_ABI_VERSION)`
+* `LibraryFull` will be set to `$(@F).$(PACKAGE_FULL_VERSION)`
+* `LibraryLink` will be set to `$(@F)`
+* `LDFLAGS_SONAME` will then be set to `-Wl,-soname,$(LibrarySONAME)`
+* The function `link-sonames` will create the appropriate symlinks to the compiled library
+* If `UseSONAMEs` is overridden to any other value
+  * `LibrarySONAME` and `LibraryFull` will both be set to `$(@F)`, and no symlinks will be generated
+
+##### Package structure variables
+* `INSTALL_PATH` is the base directory of the installed project, defaults to `/opt/$(Project)`
+* `ProjectPath` is the base directory of the project, defaults to `$(BUILD_HOME)/$(Project)`
+* `PackagePath` is the base directory of the package, defaults to `$(ProjectPath)`
+* `PackageIncludeDir`: location of the headers, defaults to `$(PackagePath)/include`
+* `PackageSourceDir`: location of the source files, defaults to `$(PackagePath)/src`
+* `PackageTestSourceDir`: location of source files to build into executables, defaults to `$(PackagePath)/test`
+* `PackageLibraryDir`: location of library files, defaults to `$(PackagePath)/lib`
+* `PackageExecDir`: location of executables, defaults to `$(PackagePath)/bin`
+* `PackageObjectDir`: location of object files, defaults to `$(PackageSourceDir)/linux/$(Arch)`
+
+##### Common targets (implicit and explicit)
+* Defines `default`, `clean`, `build`, `doc`, `all`, `release`, `install` and `uninstall` `make` targets
   * `all` has a dependency on `build`
-* Provides `install` and `uninstall` `make` targets
+* Provides `release`, `install` and `uninstall` `make` targets
+  * `release` depends on `rpm` and will copy all packaged files to the structure expected by the CI for publishing
   * `install` depends on `all` and will copy all generated files to the expected installed package structure
   * `uninstall` removes any files created during `install`
 

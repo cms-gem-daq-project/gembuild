@@ -66,8 +66,11 @@ $(info PREREL_VERSION $(PREREL_VERSION))
 CXX=g++
 CC=gcc
 
-PACKAGE_FULL_VERSION ?= $(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR).$(PACKAGE_VER_PATCH)
-PACKAGE_NOARCH_RELEASE ?= $(BUILD_VERSION).$(GITREV)git
+LDFLAGS=-g
+
+PACKAGE_FULL_VERSION?=$(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR).$(PACKAGE_VER_PATCH)
+PACKAGE_ABI_VERSION?=$(PACKAGE_VER_MAJOR).$(PACKAGE_VER_MINOR)
+PACKAGE_NOARCH_RELEASE?=$(BUILD_VERSION).$(GITREV)git
 
 PackageSourceDir    ?= $(PackagePath)/src
 PackageTestSourceDir?= $(PackagePath)/test
@@ -76,19 +79,49 @@ PackageLibraryDir   ?= $(PackagePath)/lib
 PackageExecDir      ?= $(PackagePath)/bin
 PackageObjectDir    ?= $(PackageSourceDir)/linux/$(Arch)
 
-.PHONY: default clean cleanall build all install uninstall release
+# Set up SONAME for library generation rule
+UseSONAMEs?=yes
+ifeq ("$(UseSONAMEs)","yes")
+    $(info UseSONAMEs is $(UseSONAMEs), SONAME in libraries)
+    LibrarySONAME=$(@F).$(PACKAGE_ABI_VERSION)
+    LibraryFull=$(@F).$(PACKAGE_FULL_VERSION)
+    LibraryLink=$(@F)
+    LDFLAGS_SONAME?=-Wl,-soname,$(LibrarySONAME)
+    LDFLAGS+=$(LDFLAGS_SONAME)
+else
+    $(info UseSONAMEs is $(UseSONAMEs), no SONAME in libraries)
+    LibrarySONAME=$(@F)
+    LibraryFull=$(@F)
+endif
+
+define link-sonames =
+$(info LibrarySONAME for $(@F) is $(LibrarySONAME))
+@if [ "$(UseSONAMEs)" = "yes" ]; \
+then \
+    echo Symlinking for SONAMEs; \
+    ln -sf $(LibraryFull) $(PackageLibraryDir)/$(LibrarySONAME); \
+    ln -sf $(LibrarySONAME) $(PackageLibraryDir)/$(LibraryLink); \
+else \
+    echo Not symlinking for SONAMEs; \
+fi
+endef
+
+.PHONY: all build clean cleanall default doc install uninstall release
 
 ## @common default target, no dependencies
 default:
 
-## @common clean compiled objects
+## @common clean compiled objects, override with steps to remove build objects
 clean:
 
 ## @common clean everything (objects, docs, packages)
 cleanall: clean cleandoc cleanallrpm
 
-## @common build package
+## @common build package, override with how to compile your package
 build:
+
+## @common build documentation, override with how to generate the documentation for your package
+doc:
 
 ## @common Run all necessary steps to build complete package
 all: build
@@ -106,16 +139,15 @@ fail:
 	@echo "Unable to run target due to unset variables"
 	@exit 2
 else
-## @common install package to `INSTALL_PREFIX`
+## @common install library and binary package to `INSTALL_PREFIX`
 install: all
 	echo "Executing install step"
 	$(MakeDir) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}
 	if [ -d $(PackagePath)/lib ]; then \
 	   cd $(PackagePath)/lib; \
-	   find . -name "*.so" -exec install -D -m 755 {} $(INSTALL_PREFIX)$(INSTALL_PATH)/lib/{} \; ; \
+	   find . -type f -exec sh -ec 'install -D -m 755 $$0 $(INSTALL_PREFIX)$(INSTALL_PATH)/lib/$$0' {} \; ; \
+	   find . -type l -exec sh -ec 'if [ -n "$${0}" ]; then ln -sf $$(basename $$(readlink $$0)) $(INSTALL_PREFIX)$(INSTALL_PATH)/lib/$${0##./}; fi' {} \; ; \
 	fi
-#	   find . -type l -exec sh -c 'ln -s -f ${INSTALL_PREFIX}$(INSTALL_PATH)/lib/$(basename $(readlink $0)) \
-	       ${INSTALL_PREFIX}${INSTALL_PATH}/lib/$0' {} \;
 
 	if [ -d $(PackagePath)/include ]; then \
 	   cd $(PackagePath)/include; \
@@ -158,9 +190,11 @@ uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/share/doc/$(Package)-$(PACKAGE_FULL_VERSION)
 #	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)
 
+# want this to *only* run if necessary
 ## @common prepare generated packages for a release
-release: rpm
+release: rpm doc
 	-rsync -ahcX --progress --partial $(RPM_DIR)/repos $(ProjectPath)/
+	-rsync -ahcX --progress --partial $(PackageDocs)/docs $(ProjectPath)/api
 
 # COLORS
 GREEN  := $(shell tput -Txterm setaf 2)

@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 ## Script to extract versioning information from a git tag
 usage(){
@@ -84,6 +84,7 @@ if [ ! -z ${lasttag+x} ]
 then
     revision=$(git rev-list ${lasttag}.. --count  2>/dev/null)
 fi
+
 if [ -z ${revision+x} ]
 then
     revision=0

@@ -1,5 +1,6 @@
 #!/bin/sh -xeu
 
+ARTIFACTS_DIR=artifacts
 CI_PROJECT_NAME=xhal
 CI_COMMIT_REF_NAME=ref
 KRB_PASSWORD=pass
@@ -146,7 +147,7 @@ then
     CI_DOCS_DIR=${DEPLOY_DIR}/${EOS_DOC_NAME}
     TAG_REPO_TYPE=testing
     CI_REPO_DIR=${DEPLOY_DIR}/${EOS_REPO_NAME}
-elif [[ ${BUILD_VER}${BUILD_TAG} =~ $vre$ ]]
+elif [[ ${BUILD_VER}${BUILD_TAG} =~ $vre-final$ ]]
 then
     ## base for tag vX.Y.Z
     DEPLOY_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}

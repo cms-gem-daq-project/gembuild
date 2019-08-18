@@ -4,9 +4,9 @@
 %define _version __version__
 %define _short_release __short_release__
 %define _prefix  __prefix__
-%define _sources_dir __sources_dir__
+#%%define _sources_dir __sources_dir__
 %define _tmppath /tmp
-%define _packagedir __packagedir__
+#%%define _packagedir __packagedir__
 %define _os __os__
 %define _platform __platform__
 %define _project __project__
@@ -16,11 +16,12 @@
 %define _buildarch __buildarch__
 #%%define _includedirs __includedirs__
 
-%define _unpackaged_files_terminate_build 0
+%global _unpackaged_files_terminate_build 0
 
-%define add_arm_libs %( if [ -d '%{_packagedir}lib/arm' ]; then echo "1" ; else echo "0"; fi )
-%define is_arm  %( if [[ '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
-%define not_arm  %( if [[ ! '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
+### find . -type d -wholename '*/lib/arm'
+#%%global add_arm_libs %( if [ -d '%{_packagedir}/lib/arm' ]; then echo "1" ; else echo "0"; fi )
+%global is_arm  %( if [[ '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
+%global not_arm  %( if [[ ! '__buildarch__' =~ "arm" ]]; then echo "1" ; else echo "0"; fi )
 
 %global _find_debuginfo_opts -g
 
@@ -69,14 +70,12 @@ __description__
 %prep
 ## if there is a Source tag that points to the tarball
 #%%setup -q
-ls -l %{_sourcedir}
-ls -l ./
 mv %{_sourcedir}/%{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2 ./
 tar xjf %{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2
 
 %build
-cd %{_project}/%{_packagename}
-make build -j4
+# cd %{_project}/%{_packagename}
+# make build -j4
 
 #
 # Prepare the list of files that are the input to the binary and devel RPMs
@@ -100,7 +99,7 @@ rm -rf %{buildroot}
 #
 %files
 %defattr(-,root,root,0755)
-%attr(0755,root,root) %{_prefix}/lib/*.so
+%attr(0755,root,root) %{_prefix}/lib/*.so*
 
 %dir
 %{_prefix}/bin
@@ -119,17 +118,18 @@ rm -rf %{buildroot}
 # Do not check .so files in an arm-specific library directory for provides
 %define __requires_exclude_from ^%{_prefix}/lib/arm/.*$
 %define __provides_exclude_from ^%{_prefix}/lib/arm/.*$
-%define __requires_exclude ^%{_prefix}/lib/arm/.*\\.so$
-%define __provides_exclude ^%{_prefix}/lib/arm/.*\\.so$
+%define __requires_exclude ^%{_prefix}/lib/arm/.*\\.so.*$
+%define __provides_exclude ^%{_prefix}/lib/arm/.*\\.so.*$
 
 %files -n %{_packagename}-devel
 %defattr(-,root,root,0755)
 
-%if %add_arm_libs
-%attr(0755,root,root) %{_prefix}/lib/arm/*.so
-%endif
+#%%if %add_arm_libs
+#%%attr(0755,root,root) %{_prefix}/lib/arm/*.so
+#%%endif
 
 %dir
+%{_prefix}/lib/arm
 %{_prefix}/include
 
 %doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md

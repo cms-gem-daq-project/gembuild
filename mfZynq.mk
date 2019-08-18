@@ -15,7 +15,7 @@ LDLIBS= -L$(PETA_STAGE)/lib \
 	-L$(PETA_STAGE)/usr/lib \
 	-L$(PETA_STAGE)/ncurses
 
-LDFLAGS= -g $(LDLIBS)
+LDFLAGS+=$(LDLIBS)
 
 INSTALL_PATH=/mnt/persistent/$(Project)
 

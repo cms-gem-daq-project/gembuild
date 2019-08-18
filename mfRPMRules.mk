@@ -63,7 +63,6 @@ _rpmbuild: all _spec_update rpmprep
 	    --define  "_topdir $(RPMBUILD_DIR)" \
 	    $(RPM_DIR)/$(PackageName).spec \
 	    $(RPM_OPTIONS) --target "$(GEM_ARCH)"; \
-	tree -f $(RPMBUILD_DIR)/SRPMS; \
 	rpmbuild --quiet -bb -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
@@ -71,8 +70,7 @@ _rpmbuild: all _spec_update rpmprep
 	    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
 	    --define  "_topdir $(RPMBUILD_DIR)" \
 	    $(RPM_DIR)/$(PackageName).spec \
-	    $(RPM_OPTIONS) --target "$(GEM_ARCH)"; \
-	tree -f $(RPMBUILD_DIR)/RPMS;
+	    $(RPM_OPTIONS) --target "$(GEM_ARCH)";
 
 _rpmharvest: _rpmbuild
 	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
@@ -102,8 +100,8 @@ _spec_update:
 	sed -i 's#__short_release__#$(PACKAGE_NOARCH_RELEASE)#'            $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__release__#$(PACKAGE_FULL_RELEASE)#'                    $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__prefix__#$(INSTALL_PATH)#'                             $(RPM_DIR)/$(PackageName).spec
-	sed -i 's#__sources_dir__#$(RPMBUILD_DIR)/SOURCES#'                $(RPM_DIR)/$(PackageName).spec
-	sed -i 's#__packagedir__#$(PackagePath)#'                          $(RPM_DIR)/$(PackageName).spec
+#	sed -i 's#__sources_dir__#$(RPMBUILD_DIR)/SOURCES#'                $(RPM_DIR)/$(PackageName).spec
+#	sed -i 's#__packagedir__#$(PackagePath)#'                          $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__os__#$(GEM_OS)#'                                       $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__platform__#$(GEM_PLATFORM)#'                           $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__project__#$(Project)#'                                 $(RPM_DIR)/$(PackageName).spec
