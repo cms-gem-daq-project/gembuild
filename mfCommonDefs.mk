@@ -107,6 +107,13 @@ else \
 fi
 endef
 
+define print-prereqs =
+$(info Running $@ target)
+$(info Target $@ has prereqs $?)
+$(info Target $@ has outdated prereqs $^)
+$(info Target $@ has order-only prereqs $|)
+endef
+
 .PHONY: all build clean cleanall default doc install uninstall release
 
 ## @common default target, no dependencies

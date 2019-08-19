@@ -55,18 +55,20 @@ PackagingTargets+=$(TargetRPMName)
 
 .PHONY: rpm rpmprep
 ## @rpm performs all steps necessary to generate RPM packages
-rpm: _rpmbuild
+rpm: _rpmbuild _rpmharvest
 
 ## @rpm Perform any specific setup before packaging, is an implicit dependency of `rpm`
-rpmprep:
+rpmprep: | $(PackageSourceTarball)
+	$(MakeDir) $(RPMBUILD_DIR)/SOURCES
+	cp -rfp $(PackageSourceTarball) $(RPMBUILD_DIR)/SOURCES
 
 .PHONY: _rpmbuild _rpmharvest
 _rpmbuild: $(PackageSourceTarball) $(PackagingTargets)
 
-_rpmharvest: _rpmbuild
+_rpmharvest: $(PackagingTargets)
 	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
 
-$(TargetSRPMName): $(PackageSourceTarball) $(PackageSpecFile) | rpmprep
+$(TargetSRPMName): $(PackageSpecFile) | rpmprep
 	rpmbuild --quiet -bs -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
@@ -77,7 +79,7 @@ $(TargetSRPMName): $(PackageSourceTarball) $(PackageSpecFile) | rpmprep
 	    $(RPM_OPTIONS) --target "$(GEM_ARCH)";
 	touch $@
 
-$(TargetRPMName): $(PackageSourceTarball) $(PackageSpecFile) | rpmprep
+$(TargetRPMName): $(PackageSpecFile) | rpmprep
 	rpmbuild --quiet -bb -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
@@ -88,7 +90,7 @@ $(TargetRPMName): $(PackageSourceTarball) $(PackageSpecFile) | rpmprep
 	    $(RPM_OPTIONS) --target "$(GEM_ARCH)";
 	touch $@
 
-$(PackageSpecFile): $(ProjectPath)/config/specTemplate.spec
+$(PackageSpecFile): $(ProjectPath)/config/specTemplate.spec $(PackageSourceTarball)
 	$(MakeDir) $(RPMBUILD_DIR)
 	if [ -e $(PackagePath)/spec.template ]; then \
 	    echo "$(PackagePath) found spec.template"; \
@@ -136,13 +138,6 @@ $(PackageSpecFile): $(ProjectPath)/config/specTemplate.spec
 	    echo "sed -i 's#__prefix__#$(INSTALL_PATH)#' $(RPM_DIR)/$(PackageName).spec"; \
 	    sed -i 's#__prefix__#$(INSTALL_PATH)#' $(RPM_DIR)/$(PackageName).spec; \
 	fi
-
-define print-prereqs =
-$(info Running $@ target)
-$(info Target $@ has prereqs $?)
-$(info Target $@ has outdated prereqs $^)
-$(info Target $@ has order-only prereqs $|)
-endef
 
 .PHONY: cleanrpm cleanallrpm
 ## @rpm Clean up the rpm build directory

@@ -75,7 +75,8 @@ Allows setting of required packages, as well as build required packages from a `
   * `TargetRPMName` is used to only rebuild the RPM when necessary, is set to `$(RPM_DIR)/$(PackageName).$(GEM_ARCH).rpm`
   * `PackageSpecFile` is used to only update the spec file when necessary and is set to `$(RPM_DIR)/$(PackageName).spec`
 * targets
-  * `PackageSpecfile` depends on `$(ProjectPath)/config/specTemplate.spec`, and should be overridden if a more specific template is defined in the package, in order to ensure the RPMs are rebuilt when the spec file changes
+  * `$(PackageSpecFile)` depends on `$(ProjectPath)/config/specTemplate.spec`, and should be overridden if a more specific template is defined in the package, in order to ensure the RPMs are rebuilt when the spec file changes
+    * e.g., in your package `Makefile` set `$(PackageSpecFile): path/to/overide/template`
   * `$(TargetSRPMName)` depends on `$(PackageSpecFile)` and has an order-only dependency on `rpmprep`
   * `$(TargetRPMName)` depends on `$(PackageSpecFile)` and has an order-only dependency on `rpmprep`
   * `rpmprep` should be defined to do any setup necessary between compiling and making the RPM, `rpm` depends on it
@@ -89,9 +90,17 @@ Sets up environment and rules for packaging `python` packages.
 * variables
   * `RPM_DIR` directory where package RPM will be built, defaults to `$(PackagePath)/rpm`
   * `RPMBUILD_DIR` the actual rpmbuild directory, defaults to `$(RPM_DIR)/build`
+  * `TargetPIPName` is used to only rebuild the `pip` package when necessary, is set to `$(RPM_DIR)/$(PackageName).zip`
+  * `TargetSRPMName` is used to only rebuild the SRPM when necessary, is set to `$(RPM_DIR)/$(PackageName).src.rpm`
+  * `TargetRPMName` is used to only rebuild the RPM when necessary, is set to `$(RPM_DIR)/$(PackageName).$(GEM_ARCH).rpm`
+  * `PackageSetupFile` is used to only update the `setup.py` file when necessary and is set to `$(RPMBUILD_DIR)/setup.py`
+  * `PackagePrepFile` is used to only update the the RPM build directory when necessary and is set to `$(PackageDir)/$(PackageName).prep`
 * targets
   * `pip` creates a zip file, installable with `pip`
   * `rpmprep` should be defined to do any setup necessary between compiling and making the RPM, `rpm` depends on it
+  * `PackagePrepFile` should populate the `pkg` (or `$(PackageDir)`) directory with up-to-date files for packaging
+  * `PackageSetupFile` will populate the `$(PackageSetupFile)` with values from the environment
+    * e.g., in your package `Makefile` set `$(PackageSetupFile): path/to/overide/setup.py` (this file *must* be in one of the locations that the rule looks, see [here](#setuptemplatepy))
   * `cleanrpm` removes `$(RPMBUILD_DIR)`, note that it does *not* remove the RPMs
   * `cleanallrpm` removes `$(RPM_DIR)`
 
