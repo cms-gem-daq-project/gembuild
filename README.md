@@ -71,11 +71,18 @@ Allows setting of required packages, as well as build required packages from a `
 * variables
   * `RPM_DIR` directory where package RPM will be built, defaults to `$(PackagePath)/rpm`
   * `RPMBUILD_DIR` the actual rpmbuild directory, defaults to `$(RPM_DIR)/RPMBUILD`
+  * `TargetSRPMName` is used to only rebuild the SRPM when necessary, is set to `$(RPM_DIR)/$(PackageName).src.rpm`
+  * `TargetRPMName` is used to only rebuild the RPM when necessary, is set to `$(RPM_DIR)/$(PackageName).$(GEM_ARCH).rpm`
+  * `PackageSpecFile` is used to only update the spec file when necessary and is set to `$(RPM_DIR)/$(PackageName).spec`
 * targets
+  * `PackageSpecfile` depends on `$(ProjectPath)/config/specTemplate.spec`, and should be overridden if a more specific template is defined in the package, in order to ensure the RPMs are rebuilt when the spec file changes
+  * `$(TargetSRPMName)` depends on `$(PackageSpecFile)` and has an order-only dependency on `rpmprep`
+  * `$(TargetRPMName)` depends on `$(PackageSpecFile)` and has an order-only dependency on `rpmprep`
   * `rpmprep` should be defined to do any setup necessary between compiling and making the RPM, `rpm` depends on it
-  * `cleanrpm` removes `$(RPMBUILD_DIR)`, note that it does *not* remove the RPMs
-
-Defines `rpm` target, dependent on a `spec_update` target which fills the template spec file
+    * The best practice would be to define another target which is a file dependency
+  * `cleanrpm` removes `$(RPMBUILD_DIR)` and `$(PackageSpecfile)`, note that it does *not* remove the RPMs
+  * `cleanallrpm` removes `$(RPM_DIR)`
+  * `rpm`, dependent on `$(TargetSRPMName)` and `$(TargetRPMName)`, generates the RPMs and moves them to `$(RPM_DIR)/repos`
 
 #### `mfPythonRPM.mk`
 Sets up environment and rules for packaging `python` packages.

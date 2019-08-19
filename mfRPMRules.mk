@@ -45,16 +45,28 @@ ifeq ($(GEM_ARCH),arm)
     RPM_OPTIONS=--define "_binary_payload 1"
 endif
 
+TargetSRPMName=$(RPM_DIR)/$(PackageName).src.rpm
+TargetRPMName=$(RPM_DIR)/$(PackageName).$(GEM_ARCH).rpm
+PackageSourceTarball=$(RPM_DIR)/$(Project)-$(LongPackage)-$(PACKAGE_FULL_VERSION)-$(PACKAGE_NOARCH_RELEASE).tbz2
+PackageSpecFile=$(RPM_DIR)/$(PackageName).spec
+
+PackagingTargets=$(TargetSRPMName)
+PackagingTargets+=$(TargetRPMName)
+
 .PHONY: rpm rpmprep
 ## @rpm performs all steps necessary to generate RPM packages
-rpm: _spec_update _rpmbuild _rpmharvest
+rpm: _rpmbuild
 
 ## @rpm Perform any specific setup before packaging, is an implicit dependency of `rpm`
 rpmprep:
 
 .PHONY: _rpmbuild _rpmharvest
-_rpmbuild: all _spec_update rpmprep
-	$(MakeDir) $(RPMBUILD_DIR)/{RPMS,SPECS,BUILD,SOURCES,SRPMS}
+_rpmbuild: $(PackageSourceTarball) $(PackagingTargets)
+
+_rpmharvest: _rpmbuild
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
+
+$(TargetSRPMName): $(PackageSourceTarball) $(PackageSpecFile) | rpmprep
 	rpmbuild --quiet -bs -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
@@ -62,7 +74,10 @@ _rpmbuild: all _spec_update rpmprep
 	    --define "_build_requires $(BUILD_REQUIRES_LIST)" \
 	    --define  "_topdir $(RPMBUILD_DIR)" \
 	    $(RPM_DIR)/$(PackageName).spec \
-	    $(RPM_OPTIONS) --target "$(GEM_ARCH)"; \
+	    $(RPM_OPTIONS) --target "$(GEM_ARCH)";
+	touch $@
+
+$(TargetRPMName): $(PackageSourceTarball) $(PackageSpecFile) | rpmprep
 	rpmbuild --quiet -bb -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
@@ -71,12 +86,9 @@ _rpmbuild: all _spec_update rpmprep
 	    --define  "_topdir $(RPMBUILD_DIR)" \
 	    $(RPM_DIR)/$(PackageName).spec \
 	    $(RPM_OPTIONS) --target "$(GEM_ARCH)";
+	touch $@
 
-_rpmharvest: _rpmbuild
-	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
-
-.PHONY: _spec_update
-_spec_update:
+$(PackageSpecFile): $(ProjectPath)/config/specTemplate.spec
 	$(MakeDir) $(RPMBUILD_DIR)
 	if [ -e $(PackagePath)/spec.template ]; then \
 	    echo "$(PackagePath) found spec.template"; \
@@ -125,6 +137,12 @@ _spec_update:
 	    sed -i 's#__prefix__#$(INSTALL_PATH)#' $(RPM_DIR)/$(PackageName).spec; \
 	fi
 
+define print-prereqs =
+$(info Running $@ target)
+$(info Target $@ has prereqs $?)
+$(info Target $@ has outdated prereqs $^)
+$(info Target $@ has order-only prereqs $|)
+endef
 
 .PHONY: cleanrpm cleanallrpm
 ## @rpm Clean up the rpm build directory

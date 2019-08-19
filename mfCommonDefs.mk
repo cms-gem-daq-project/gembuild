@@ -78,6 +78,7 @@ PackageIncludeDir   ?= $(PackagePath)/include
 PackageLibraryDir   ?= $(PackagePath)/lib
 PackageExecDir      ?= $(PackagePath)/bin
 PackageObjectDir    ?= $(PackageSourceDir)/linux/$(Arch)
+PackageDocsDir      ?= $(PackagePath)/doc/_build/html
 
 # Set up SONAME for library generation rule
 UseSONAMEs?=yes
@@ -193,8 +194,9 @@ uninstall:
 # want this to *only* run if necessary
 ## @common prepare generated packages for a release
 release: rpm doc
-	-rsync -ahcX --progress --partial $(RPM_DIR)/repos $(ProjectPath)/
-	-rsync -ahcX --progress --partial $(PackageDocs)/docs $(ProjectPath)/api
+	$(MakeDir) $(ProjectPath)/release/api
+	-rsync -ahcX --progress --partial $(RPM_DIR)/repos $(ProjectPath)/release/
+	-if [ -d $(PackageDocsDir) ]; then rsync -ahcX --progress --partial $(PackageDocsDir)/ $(ProjectPath)/release/api/$(PackageName)/; fi
 
 # COLORS
 GREEN  := $(shell tput -Txterm setaf 2)
