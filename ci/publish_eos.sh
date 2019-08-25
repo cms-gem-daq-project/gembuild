@@ -5,7 +5,7 @@ source $(dirname $0)/utils.sh
 trap cleanup SIGHUP SIGINT SIGQUIT SIGABRT SIGTERM
 
 ## Structure of ARTIFACTS_DIR
-# └── artifacts
+# └── ${ARTIFACTS_DIR}
 #     ├── api
 #     └── repos
 #         ├── ${CI_PROJECT_NAME}_${REL_VERSION}_{ARCH}.repo
@@ -16,96 +16,94 @@ trap cleanup SIGHUP SIGINT SIGQUIT SIGABRT SIGTERM
 #             ├── DEBUGRPMS
 #             └── SRPMS ## should be arch independent...
 
+#### Structure of EOS website
 ## from https://gist.github.com/jsturdy/a9cbc64c947364a01057a1d40e228452
-# ├── index.html
-# ├── sw
-# │   ├── RPM-GPG-KEY-cmsgemdaq
-# │   ├── ${CI_PROJECT_NAME}_${REL_VERSION}_{ARCH}.repo (or in the ${CI_PROJECT_NAME} namespace?
-# │   ├── ${CI_PROJECT_NAME}
-# │   │   ├── ${CI_PROJECT_NAME}_${REL_VERSION}_{ARCH}.repo
-# │   │   ├── unstable (${EOS_UNSTABLE_DIR}) ## all builds not on a release branch
-# │   │   │   ├── api (${EOS_DOC_NAME})
-# │   │   │   │   └── latest ## overwrite with latest each build
-# │   │   │   └── repos (${EOS_REPO_NAME})
-# │   │   │       ├── SRPMS ## should be arch independent
-# │   │   │       │   └── repodata
-# │   │   │       └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
-# │   │   │           ├── tarballs
-# │   │   │           ├── RPMS  ## keep all versions, manual cleanup only?
-# │   │   │           │   └── repodata
-# │   │   │           └── DEBUGRPMS
-# │   │   │               └── repodata
-# │   │   └── releases (${EOS_RELEASE_DIR})
-# │   │       ├── api (${EOS_DOC_NAME})
-# │   │       │   ├── latest (symlink to the very latest api version build?)
-# │   │       │   └── ${REL_VERSION} ## Maj.Min, might even not have this directory?
-# │   │       │       ├── latest -> ${REL_VERSION}.Z+2
-# │   │       │       ├── ${REL_VERSION}.Z+2
-# │   │       │       ├── ${REL_VERSION}.Z+1
-# │   │       │       └── ${REL_VERSION}.Z
-# │   │       └── repos (${EOS_REPO_NAME})
-# │   │           └── ${REL_VERSION} ## Maj.Min
-# │   │               ├── base
-# │   │               │   ├── SRPMS ## should be arch independent
-# │   │               │   │   └── repodata
-# │   │               │   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
-# │   │               │       ├── tarballs
-# │   │               │       ├── RPMS
-# │   │               │       │   └── repodata
-# │   │               │       └── DEBUGRPMS
-# │   │               │           └── repodata
-# │   │               └── testing ## all untagged builds along a given release tree
-# │   │                   ├── SRPMS ## should be arch independent
-# │   │                   │   └── repodata
-# │   │                   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
-# │   │                       ├── tarballs
-# │   │                       ├── RPMS
-# │   │                       │   └── repodata
-# │   │                       └── DEBUGRPMS
-# │   │                           └── repodata
-############### BEGIN OR
-# │   │   └── releases (${EOS_RELEASE_DIR})
-# │   │       └── ${REL_VERSION} ## Maj.Min
-# │   │           ├── api (${EOS_DOC_NAME})
-# │   │           │   ├── latest -> ${REL_VERSION}.Z+2
-# │   │           │   ├── ${REL_VERSION}.Z+2
-# │   │           │   ├── ${REL_VERSION}.Z+1
-# │   │           │   └── ${REL_VERSION}.Z
-# │   │           └── repos (${EOS_REPO_NAME})
-# │   │               ├── base
-# │   │               │   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
-# │   │               │       ├── tarballs
-# │   │               │       ├── RPMS
-# │   │               │       │   └── repodata
-# │   │               │       └── DEBUGRPMS
-# │   │               │           └── repodata
-# │   │               └── testing ## all untagged builds along a given release tree
-# │   │                   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
-# │   │                       ├── tarballs
-# │   │                       ├── RPMS
-# │   │                       │   └── repodata
-# │   │                       └── DEBUGRPMS
-# │   │                           └── repodata
-# │   └── extras ## holds all extra/external packages we build for compatibility
-# │       ├── SRPMS ## provide source RPMs for extras?
-# │       │   └── repodata
-# |       └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
-# │           ├── RPMS
-# │           │   └── repodata
-# │           └── DEBUGRPMS
-# │               └── repodata
+# ├── index.html # landing page
 # ├── guides ## user/developer guides and other synthesied information, if versioning of this is foreseen, need to address
 # │   ├── user
-# |   │   └── index.html
+# │   │   └── index.html
 # │   └── developers
-# |       └── index.html
-# └── docs
+# │       └── index.html
+# ├── docs
+# │   ├── index.html
+# │   ├── ${CI_PROJECT_NAME} ## one for each repo, this would be he entry point to the versioned
+# │   │   ├── index.html
+# │   │   ├── unstable ## filled from `develop` or symlink to the above `api/latest`
+# │   │   ├── latest ## filled from last tagged build, or as a symlink to releases/M.M/api/latest
+# │   │   ├── api (${EOS_DOC_NAME})
+# │   │   │   ├── unstable ## filled from `develop`, or any non tagged CI job
+# │   │   │   ├── latest ## filled from last tagged build or symlink to the very latest api version build?
+# │   │   │   ├── ${PKG_BASE_TAG}.Z+2
+# │   │   │   ├── ${PKG_BASE_TAG}.Z+1
+# │   │   │   └── ${PKG_BASE_TAG}.Z
+# │   │   └── styles/scripts/css/js  ## styles that we will not change
+# │   └── styles/scripts/css/js  ## styles that we will not change, maybe even package agnostic?
+# └── sw
 #     ├── index.html
-#     └── ${CI_PROJECT_NAME} ## one for each repo, this would be he entry point to the versioned
-#         ├── index.html
-#         ├── unstable ## filled from `develop` or symlink to the above `api/latest`
-#         ├── latest ## filled from last tagged build, or as a symlink to releases/M.M/api/latest
-#         └── styles/scripts/css/js  ## styles that we will not change
+#     │   ### one yum repo per git repo (easiest)
+#     ├── RPM-GPG-KEY-cmsgemdaq
+#     ├── ${CI_PROJECT_NAME}_${REL_VERSION}_{ARCH}.repo (or in the ${CI_PROJECT_NAME} namespace?
+#     ├── ${CI_PROJECT_NAME}
+#     │   ├── ${CI_PROJECT_NAME}_${REL_VERSION}_{ARCH}.repo
+#     │   ├── unstable (${EOS_UNSTABLE_DIR}) ## all builds not on a release branch
+#     │   │   └── repos (${EOS_REPO_NAME})
+#     │   │       ├── SRPMS ## should be arch independent
+#     │   │       │   └── repodata
+#     │   │       └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
+#     │   │           ├── tarballs
+#     │   │           ├── RPMS  ## keep all versions, manual cleanup only?
+#     │   │           │   └── repodata
+#     │   │           └── DEBUGRPMS
+#     │   │               └── repodata
+#     │   │   ##### Option 1
+#     │   ├── releases (${EOS_RELEASE_DIR})
+#     │   │   └── repos (${EOS_REPO_NAME})
+#     │   │       └── ${REL_VERSION} ## Maj.Min
+#     │   │           ├── base
+#     │   │           │   ├── SRPMS ## should be arch independent
+#     │   │           │   │   └── repodata
+#     │   │           │   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
+#     │   │           │       ├── tarballs
+#     │   │           │       ├── RPMS
+#     │   │           │       │   └── repodata
+#     │   │           │       └── DEBUGRPMS
+#     │   │           │           └── repodata
+#     │   │           └── testing ## all untagged builds along a given release tree
+#     │   │               ├── SRPMS ## should be arch independent
+#     │   │               │   └── repodata
+#     │   │               └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
+#     │   │                   ├── tarballs
+#     │   │                   ├── RPMS
+#     │   │                   │   └── repodata
+#     │   │                   └── DEBUGRPMS
+#     │   │                       └── repodata
+#     │   │   ##### Option 2
+#     │   └── releases (${EOS_RELEASE_DIR})
+#     │       └── ${REL_VERSION} ## Maj.Min
+#     │           └── repos (${EOS_REPO_NAME})
+#     │               ├── base
+#     │               │   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
+#     │               │       ├── tarballs
+#     │               │       ├── RPMS
+#     │               │       │   └── repodata
+#     │               │       └── DEBUGRPMS
+#     │               │           └── repodata
+#     │               └── testing ## all untagged builds along a given release tree
+#     │                   └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
+#     │                       ├── tarballs
+#     │                       ├── RPMS
+#     │                       │   └── repodata
+#     │                       └── DEBUGRPMS
+#     │                           └── repodata
+#     └── extras ## holds all extra/external packages we build for compatibility
+#         ├── SRPMS ## provide source RPMs for extras?
+#         │   └── repodata
+#         └── ${ARCH} ## (slc6_x86_64/centos7_x86_64/centos8_x86_64/arm/peta/noarch/pythonX.Y/gccXYZ/clangXYZ?)
+#             ├── RPMS
+#             │   └── repodata
+#             └── DEBUGRPMS
+#                 └── repodata
+#     │ ### gemos releases
 
 RELEASE_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}
 
@@ -142,7 +140,8 @@ else
     TAG_REPO_TYPE=/unstable
 fi
 
-CI_DOCS_DIR=${DEPLOY_DIR}/${EOS_DOC_NAME}
+# CI_DOCS_DIR=${DEPLOY_DIR}/${EOS_DOC_NAME}
+CI_DOCS_DIR=${EOS_DOCS_NAME}
 CI_REPO_DIR=${DEPLOY_DIR}/${EOS_REPO_NAME}
 
 EOS_REPO_PATH=${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${CI_REPO_DIR}/${TAG_REPO_TYPE%%/*}

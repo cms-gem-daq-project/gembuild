@@ -193,40 +193,40 @@ publishDocs () {
         echo "Publishing unstable docs"
         ## we are on an unstable version
         TAG_DOC_DIR=${CI_DOCS_DIR}
-        CI_TAG_DOC_DIR=${EOS_SW_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
+        CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         rsync -ahcX \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
-        ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
-mkdir -p ${LATEST_DOC_DIR};
-ln -sfn ../../${EOS_SW_DIR}/${TAG_DOC_DIR} ${LATEST_DOC_DIR}/unstable
-EOF
+#         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
+# mkdir -p ${LATEST_DOC_DIR};
+# ln -sfn ../../${EOS_SW_DIR}/${TAG_DOC_DIR} ${LATEST_DOC_DIR}/unstable
+# EOF
     elif [[ "$1" =~ "testing" ]]
     then
         echo "Publishing testing docs"
         ## X.Y prerelease (package in testing)
         TAG_DOC_DIR=${CI_DOCS_DIR}/latest
-        CI_TAG_DOC_DIR=${EOS_SW_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
+        CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         rsync -ahcX \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
-        ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
-mkdir -p ${LATEST_DOC_DIR};
-ln -sfn ../../${EOS_SW_DIR}/${TAG_DOC_DIR} ${LATEST_DOC_DIR}/latest;
-EOF
+#         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
+# mkdir -p ${LATEST_DOC_DIR};
+# ln -sfn ../../${EOS_SW_DIR}/${TAG_DOC_DIR} ${LATEST_DOC_DIR}/latest;
+# EOF
     elif [[ "$1" =~ "base" ]]
     then
         echo "Publishing base docs"
         ## X.Y.Z version (package in base)
         TAG_DOC_DIR=${CI_DOCS_DIR}/${BUILD_VER}
-        CI_TAG_DOC_DIR=${EOS_SW_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
+        CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         LATEST_TAG_DOC_DIR=${CI_DOCS_DIR}/latest
         rsync -ahcX \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
-        ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
-mkdir -p ${LATEST_TAG_DOC_DIR};
-rsync -ahcX ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${TAG_DOC_DIR}/ ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${LATEST_TAG_DOC_DIR};
-mkdir -p ${LATEST_DOC_DIR};
-ln -sfn ../../${EOS_SW_DIR}/${LATEST_TAG_DOC_DIR} ${LATEST_DOC_DIR}/latest
-EOF
+#         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
+# mkdir -p ${LATEST_TAG_DOC_DIR};
+# rsync -ahcX ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${TAG_DOC_DIR}/ ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${LATEST_TAG_DOC_DIR};
+# mkdir -p ${LATEST_DOC_DIR};
+# ln -sfn ../../${EOS_SW_DIR}/${LATEST_TAG_DOC_DIR} ${LATEST_DOC_DIR}/latest
+# EOF
     fi
     ## update the index file?
     ## or have the landing page running some scripts querying the git tags, populating some JSON, and dynamically adapting the content
