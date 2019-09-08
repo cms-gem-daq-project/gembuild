@@ -151,20 +151,20 @@ else
 install: all
 	echo "Executing install step"
 	$(MakeDir) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}
-	if [ -d $(PackagePath)/lib ]; then \
-	   cd $(PackagePath)/lib; \
+	if [ -d $(PackageLibraryDir) ]; then \
+	   cd $(PackageLibraryDir); \
 	   find . -type f -exec sh -ec 'install -D -m 755 $$0 $(INSTALL_PREFIX)$(INSTALL_PATH)/lib/$$0' {} \; ; \
 	   find . -type l -exec sh -ec 'if [ -n "$${0}" ]; then ln -sf $$(basename $$(readlink $$0)) $(INSTALL_PREFIX)$(INSTALL_PATH)/lib/$${0##./}; fi' {} \; ; \
 	fi
 
-	if [ -d $(PackagePath)/include ]; then \
-	   cd $(PackagePath)/include; \
+	if [ -d $(PackageIncludeDir) ]; then \
+	   cd $(PackageIncludeDir); \
 	   find . \( -name "*.h" -o -name "*.hh" -o -name "*.hpp" -o -name "*.hxx" \) \
 		-exec install -D -m 655 {} $(INSTALL_PREFIX)$(INSTALL_PATH)/include/{} \; ; \
 	fi
 
-	if [ -d $(PackagePath)/bin ]; then \
-	   cd $(PackagePath)/bin; \
+	if [ -d $(PackageExecDir) ]; then \
+	   cd $(PackageExecDir); \
 	   find . -name "*" -exec install -D -m 755 {} $(INSTALL_PREFIX)$(INSTALL_PATH)/bin/{} \; ; \
 	fi
 
@@ -181,8 +181,8 @@ install: all
 	$(MakeDir) $(INSTALL_PREFIX)/usr/lib/debug$(INSTALL_PATH)/{bin,lib}
 	$(MakeDir) $(INSTALL_PREFIX)/usr/src/debug/$(Package)-$(PACKAGE_FULL_VERSION)
 
-	if [ -d $(PackagePath)/src ]; then \
-	   cd $(PackagePath)/src; \
+	if [ -d $(PackageSourceDir) ]; then \
+	   cd $(PackageSourceDir); \
 	   find . \( -name "*.cc"  -o -name "*.cpp" -o -name "*.cxx" -o -name "*.c" -o -name "*.C" \) \
 		-exec install -D -m 655 {} $(INSTALL_PREFIX)/usr/src/debug/$(Package)-$(PACKAGE_FULL_VERSION)/src/{} \; ; \
 	fi

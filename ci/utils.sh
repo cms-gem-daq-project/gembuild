@@ -90,6 +90,7 @@ cleanup () {
 
 ## add GPG signature to RPM
 signRPMs () (
+    local GNUPGHOME=/tmp/.gnupg-ci
     importGPG
     echo Imported GPG chain for signing RPMs
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64 -d)
@@ -110,6 +111,7 @@ echo expect eof; ) | expect' \;
 
 ## create GPG signature for other tarballs
 signTarballs () (
+    local GNUPGHOME=/tmp/.gnupg-ci
     importGPG
     echo Imported GPG chain for signing tarballs
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64 -d)
@@ -140,6 +142,7 @@ EOF
     # done < <(ssh -t ${KRB_USERNAME}@lxplus.cern.ch "find ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${DEPLOY_DIR} -type f -iname '*.xml' -print0")
     #rm tmpfiles
 
+    local GNUPGHOME=/tmp/.gnupg-ci
     importGPG
     echo Imported GPG chain for signing repo metadata
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64 -d)

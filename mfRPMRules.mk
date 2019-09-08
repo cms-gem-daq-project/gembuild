@@ -7,7 +7,7 @@
 
 ProjectPath?=$(BUILD_HOME)/$(Project)
 PackagePath?=$(ProjectPath)
-RPM_DIR:=$(PackagePath)/rpm
+RPM_DIR?=$(PackagePath)/rpm
 RPMBUILD_DIR:=$(RPM_DIR)/RPMBUILD
 URL:=https://gitlab.cern.ch/cms-gem-daq-project/$(Project)
 
@@ -53,7 +53,7 @@ PackageSpecFile=$(RPM_DIR)/$(PackageName).spec
 PackagingTargets=$(TargetSRPMName)
 PackagingTargets+=$(TargetRPMName)
 
-.PHONY: rpm rpmprep
+.PHONY: rpm rpmprep specificspecupdate
 ## @rpm performs all steps necessary to generate RPM packages
 rpm: _rpmbuild _rpmharvest
 
@@ -68,7 +68,7 @@ _rpmbuild: $(PackageSourceTarball) $(PackagingTargets)
 _rpmharvest: $(PackagingTargets)
 	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
 
-$(TargetSRPMName): $(PackageSpecFile) | rpmprep
+$(TargetSRPMName): $(PackageSpecFile) | specificspecupdate rpmprep
 	rpmbuild --quiet -bs -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
@@ -79,7 +79,7 @@ $(TargetSRPMName): $(PackageSpecFile) | rpmprep
 	    $(RPM_OPTIONS) --target "$(GEM_ARCH)";
 	touch $@
 
-$(TargetRPMName): $(PackageSpecFile) | rpmprep
+$(TargetRPMName): $(PackageSpecFile) | specificspecupdate rpmprep
 	rpmbuild --quiet -bb -bl \
 	    --buildroot=$(RPMBUILD_DIR)/BUILDROOT \
 	    --define "_requires $(REQUIRES_LIST)" \
