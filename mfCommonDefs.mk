@@ -200,6 +200,10 @@ uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/share/doc/$(Package)-$(PACKAGE_FULL_VERSION)
 #	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)
 
+## @common run abi-compliance-checker against two commits (run only during MRs)
+checkabi:
+	$(ConfigDir)/ci/parse_api_changes.sh
+
 # want this to *only* run if necessary
 ## @common prepare generated packages for a release
 release: rpm doc
