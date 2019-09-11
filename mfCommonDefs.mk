@@ -85,20 +85,17 @@ PackageDocsDir      ?= $(PackagePath)/doc/_build/html
 # Set up SONAME for library generation rule
 UseSONAMEs?=yes
 ifeq ("$(UseSONAMEs)","yes")
-    $(info UseSONAMEs is $(UseSONAMEs), SONAME in libraries)
     LibrarySONAME=$(@F).$(PACKAGE_ABI_VERSION)
     LibraryFull=$(@F).$(PACKAGE_FULL_VERSION)
     LibraryLink=$(@F)
     LDFLAGS_SONAME?=-Wl,-soname,$(LibrarySONAME)
     LDFLAGS+=$(LDFLAGS_SONAME)
 else
-    $(info UseSONAMEs is $(UseSONAMEs), no SONAME in libraries)
     LibrarySONAME=$(@F)
     LibraryFull=$(@F)
 endif
 
 define link-sonames =
-$(info LibrarySONAME for $(@F) is $(LibrarySONAME))
 @if [ "$(UseSONAMEs)" = "yes" ]; \
 then \
     echo Symlinking for SONAMEs; \
@@ -200,9 +197,33 @@ uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/share/doc/$(Package)-$(PACKAGE_FULL_VERSION)
 #	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)
 
+.PHONY: dumpabi-old dumpabi-new
+.PHONY: getabi-old getabi-new
+# dumpabi should do 4 steps (in order): clean, change branch, compile, create dumps
+getabi-old getabi-new:
+getabi-old getabi-new: clean
+dumpabi-old dumpabi-new: OPTFLAGS=-g -Og
+dumpabi-old dumpabi-new: build
+
+getabi-old: clean
+	$(ConfigDir)/ci/parse_api_changes.sh getold
+
+getabi-new: clean
+	$(ConfigDir)/ci/parse_api_changes.sh getnew
+
+dumpabi-old: getabi-old build
+	$(ConfigDir)/ci/parse_api_changes.sh dumpold
+
+dumpabi-new: getabi-new build
+	$(ConfigDir)/ci/parse_api_changes.sh dumpnew
+
 ## @common run abi-compliance-checker against two commits (run only during MRs)
+checkabi: dumpabi-old dumpabi-new
 checkabi:
-	$(ConfigDir)/ci/parse_api_changes.sh
+	$(ConfigDir)/ci/parse_api_changes.sh compare
+	mv report.txt $(PackagePath)_compat_summary.txt
+	mv compat_reports $(PackagePath)
+	$(MAKE) clean
 
 # want this to *only* run if necessary
 ## @common prepare generated packages for a release

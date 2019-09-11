@@ -129,6 +129,7 @@ signTarballs () (
 signRepository () {
     # set -o posix
     local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64 -d)
+    local SSHHOME=/tmp/.ssh
     repofiles=()
     ## redirect to tmp file, as pipe doesn't work when called from script
     klist
@@ -166,6 +167,7 @@ EOF
 
 publishRepository () {
     local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64 -d)
+    local SSHHOME=/tmp/.ssh
     pushd ${ARTIFACTS_DIR}/repos
     rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
           --relative . --exclude=*.repo \
@@ -191,6 +193,7 @@ EOF
 
 publishDocs () {
     local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64 -d)
+    local SSHHOME=/tmp/.ssh
     LATEST_DOC_DIR=${EOS_BASE_WEB_DIR}/${EOS_DOCS_DIR}
 
     klist
