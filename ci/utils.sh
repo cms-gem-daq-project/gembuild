@@ -4,10 +4,10 @@ authenticateKRB () {
     local KRB_PASSWORD=$(echo ${KRB_PASSWORD} | base64 -d)
     local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64 -d)
     echo ${KRB_PASSWORD} | kinit -A -f ${KRB_USERNAME}@CERN.CH
-    local KRB_PASSWORD=$(echo ${KRB_PASSWORD} | base64)
-    local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64)
+    # local KRB_PASSWORD=$(echo ${KRB_PASSWORD} | base64)
+    # local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64)
 
-    export SSHHOME=/tmp/.ssh
+    local SSHHOME=/tmp/.ssh
     mkdir -p ${SSHHOME}/tmp
     chmod go-rwx -R ${SSHHOME}
     touch ${SSHHOME}/config
@@ -27,17 +27,16 @@ EOF
 
 unauthenticateKRB () {
     kdestroy
-    export SSHHOME=/tmp/.ssh
+    local SSHHOME=/tmp/.ssh
     if [ -d ${SSHHOME} ]
     then
         find ${SSHHOME} -type f -print0 -exec shred -n100 -u {} \;
     fi
-    unset SSHHOME
 }
 
 ## import GPG key
 importGPG () {
-    export GNUPGHOME=/tmp/.gnupg-ci
+    # export GNUPGHOME=/tmp/.gnupg-ci
     mkdir -p ${GNUPGHOME}
     # sudo mount -t ramfs -o size=1M ramfs ${GNUPGHOME}
     # sudo chown $(id -u):$(id -g) ${GNUPGHOME}
@@ -65,7 +64,7 @@ importGPG () {
         echo No GPG key provided
         exit 1
     fi
-    unset GNUPGHOME
+    # unset GNUPGHOME
 }
 
 ## remove imported GPG key
@@ -90,7 +89,7 @@ cleanup () {
 
 ## add GPG signature to RPM
 signRPMs () (
-    local GNUPGHOME=/tmp/.gnupg-ci
+    export GNUPGHOME=/tmp/.gnupg-ci
     importGPG
     echo Imported GPG chain for signing RPMs
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64 -d)
@@ -107,11 +106,12 @@ echo expect eof; ) | expect' \;
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64)
     destroyGPG
     echo Destroyed GPG chain for signing RPMs
+    unset GNUPGHOME
 )
 
 ## create GPG signature for other tarballs
 signTarballs () (
-    local GNUPGHOME=/tmp/.gnupg-ci
+    export GNUPGHOME=/tmp/.gnupg-ci
     importGPG
     echo Imported GPG chain for signing tarballs
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64 -d)
@@ -122,6 +122,7 @@ signTarballs () (
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64)
     destroyGPG
     echo Destroyed GPG chain for signing tarballs
+    unset GNUPGHOME
 )
 
 ## add GPG signtaure to repository metadata
@@ -142,16 +143,16 @@ EOF
     # done < <(ssh -t ${KRB_USERNAME}@lxplus.cern.ch "find ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${DEPLOY_DIR} -type f -iname '*.xml' -print0")
     #rm tmpfiles
 
-    local GNUPGHOME=/tmp/.gnupg-ci
+    export GNUPGHOME=/tmp/.gnupg-ci
     importGPG
     echo Imported GPG chain for signing repo metadata
     local GPG_PASSPHRASE=$(echo ${GPG_PASSPHRASE} | base64 -d)
     for f in ${repofiles[@]}
     do
-        scp ${KRB_USERNAME}@lxplus.cern.ch:$f .
+        scp -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch:$f .
         echo ${GPG_PASSPHRASE} | gpg --batch --yes --passphrase-fd 0 --detach-sign -a $(basename $f)
         ls -l $(basename $f)*
-        scp $(basename $f)* ${KRB_USERNAME}@lxplus.cern.ch:${f%%$(basename $f)}
+        scp -F ${SSHHOME}/config $(basename $f)* ${KRB_USERNAME}@lxplus.cern.ch:${f%%$(basename $f)}
         shred -n100 -u $(basename $f)
         shred -n100 -u $(basename $f).asc
     done
@@ -160,17 +161,19 @@ EOF
     local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64)
     destroyGPG
     echo Destroyed GPG chain for signing repo metadata
+    unset GNUPGHOME
 }
 
 publishRepository () {
     local KRB_USERNAME=$(echo ${KRB_USERNAME} | base64 -d)
     pushd ${ARTIFACTS_DIR}/repos
-    rsync -ahcX --relative . --exclude=*.repo \
+    rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
+          --relative . --exclude=*.repo \
           --rsync-path="mkdir -p ${EOS_REPO_PATH} && rsync" ${KRB_USERNAME}@lxplus.cern.ch:${EOS_REPO_PATH}
     popd
 
     echo "Updating the repositories"
-    rsync -ahcX \
+    rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
           ${ARTIFACTS_DIR}/repos/*.repo ${KRB_USERNAME}@lxplus.cern.ch:${EOS_SW_PATH}
 
     ## update the groups files?
@@ -197,7 +200,7 @@ publishDocs () {
         ## we are on an unstable version
         TAG_DOC_DIR=${CI_DOCS_DIR}
         CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
-        rsync -ahcX \
+        rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
 #         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
 # mkdir -p ${LATEST_DOC_DIR};
@@ -209,7 +212,7 @@ publishDocs () {
         ## X.Y prerelease (package in testing)
         TAG_DOC_DIR=${CI_DOCS_DIR}/latest
         CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
-        rsync -ahcX \
+        rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
 #         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
 # mkdir -p ${LATEST_DOC_DIR};
@@ -222,7 +225,7 @@ publishDocs () {
         TAG_DOC_DIR=${CI_DOCS_DIR}/${BUILD_VER}
         CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         LATEST_TAG_DOC_DIR=${CI_DOCS_DIR}/latest
-        rsync -ahcX \
+        rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
 #         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
 # mkdir -p ${LATEST_TAG_DOC_DIR};

@@ -38,6 +38,10 @@ trap cleanup SIGHUP SIGINT SIGQUIT SIGABRT SIGTERM
 # │   │   │   └── ${PKG_BASE_TAG}.Z
 # │   │   └── styles/scripts/css/js  ## styles that we will not change
 # │   └── styles/scripts/css/js  ## styles that we will not change, maybe even package agnostic?
+# ├── ci-builds
+# │   └── ${CI_PROJECT_NAME} ## one for each repo, this would be he entry point to the versioned
+# │       └── ${CI_MERGE_REQUEST_ID}
+# │           └── compat_report
 # └── sw
 #     ├── index.html
 #     │   ### one yum repo per git repo (easiest)
@@ -190,5 +194,5 @@ unauthenticateKRB
 if [ -n ${KRB_CACHE} ] && [ -f ${KRB_CACHE##'FILE:'} ]
 then
     export KRB5CCNAME=${KRB_CACHE}
-    krenew
+    kinit -R
 fi
