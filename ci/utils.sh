@@ -134,7 +134,7 @@ signRepository () {
     ## redirect to tmp file, as pipe doesn't work when called from script
     klist
     ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch <<EOF > tmpfiles
-find ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${DEPLOY_DIR} -type f -iname '*.xml' -print0
+find ${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${CI_REPO_DIR} -type f -iname '*.xml' -print0
 EOF
     while IFS=  read -r -d $'\0'
     do
@@ -176,7 +176,7 @@ publishRepository () {
 
     echo "Updating the repositories"
     rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
-          ${ARTIFACTS_DIR}/repos/*.repo ${KRB_USERNAME}@lxplus.cern.ch:${EOS_SW_PATH}
+          ${ARTIFACTS_DIR}/repos/*.repo ${KRB_USERNAME}@lxplus.cern.ch:${EOS_SW_PATH}/repos
 
     ## update the groups files?
 
@@ -261,7 +261,14 @@ BUILD_TAG=$(${CONFIG_DIR}/tag2rel.sh | \
                    awk '{split($$0,a," "); print a[8];}' | \
                    awk '{split($$0,b,":"); print b[2];}')
 
-REL_VERSION=${BUILD_VER%.*}
+BRANCH_NAME=$(git rev-parse HEAD)
+
+if [[ "${BRANCH_NAME}" =~ '^release/gemos-' ]]
+then
+    REL_VERSION=${${BRAMCH_NAME##*/}##*-}
+else
+    REL_VERSION=unstable-PKG-${BUILD_VER%.*}
+fi
 
 ## Would like to have a single gemos repo, with some "release" version, but requires
 #  that all packages are tracked and maintained in concert, and adds compleity without

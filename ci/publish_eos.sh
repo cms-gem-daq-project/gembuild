@@ -109,9 +109,9 @@ trap cleanup SIGHUP SIGINT SIGQUIT SIGABRT SIGTERM
 #                 └── repodata
 #     │ ### gemos releases
 
-RELEASE_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}
+# RELEASE_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}
 
-BASE_DIR=${PWD}
+# BASE_DIR=${PWD}
 
 ##### RPMs
 # repo release is X.Y, independent of package tag version
@@ -146,11 +146,11 @@ fi
 
 # CI_DOCS_DIR=${DEPLOY_DIR}/${EOS_DOC_NAME}
 CI_DOCS_DIR=${EOS_DOC_NAME}
-CI_REPO_DIR=${DEPLOY_DIR}/${EOS_REPO_NAME}
+CI_REPO_DIR=${EOS_REPO_NAME}/${DEPLOY_DIR}
 
 EOS_REPO_PATH=${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${CI_REPO_DIR}/${TAG_REPO_TYPE%%/*}
 
-EOS_SW_PATH=${EOS_BASE_WEB_DIR}/${EOS_SW_DIR%%/${CI_PROJECT_NAME}}
+EOS_SW_PATH=${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}
 EOS_DOCS_PATH=${EOS_BASE_WEB_DIR}/${EOS_DOCS_DIR%%/${CI_PROJECT_NAME}}
 
 echo "Tag ${BUILD_VER}${BUILD_TAG} determined to be ${TAG_REPO_TYPE#*/}"
@@ -161,7 +161,7 @@ echo Signed RPMs
 signTarballs
 echo Signed tarballs
 
-KRB_CACHE=$(klist |egrep FILE| awk '{split($0,a, " "); print a[3];}')
+# KRB_CACHE=$(klist |egrep FILE| awk '{split($0,a, " "); print a[3];}')
 authenticateKRB
 
 publishRepository
@@ -191,8 +191,8 @@ popd
 
 unauthenticateKRB
 
-if [ -n ${KRB_CACHE} ] && [ -f ${KRB_CACHE##'FILE:'} ]
-then
-    export KRB5CCNAME=${KRB_CACHE}
-    kinit -R
-fi
+# if [ -n ${KRB_CACHE} ] && [ -f ${KRB_CACHE##'FILE:'} ]
+# then
+#     export KRB5CCNAME=${KRB_CACHE}
+#     kinit -R
+# fi

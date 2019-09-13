@@ -87,10 +87,10 @@ _bdistbuild: rpmprep
 	    bdist --formats=bztar,gztar,zip
 
 _pipharvest: $(TargetPIPName)
-	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(Project)
 
 _rpmharvest: $(TargetSRPMName) $(TargetRPMName)
-	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(Project)
 
 $(PackageSetupFile): $(ProjectPath)/config/setupTemplate.py
 	$(MakeDir) $(RPMBUILD_DIR)

@@ -66,7 +66,7 @@ rpmprep: | $(PackageSourceTarball)
 _rpmbuild: $(PackageSourceTarball) $(PackagingTargets)
 
 _rpmharvest: $(PackagingTargets)
-	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR)
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(Project)
 
 $(TargetSRPMName): $(PackageSpecFile) | specificspecupdate rpmprep
 	rpmbuild --quiet -bs -bl \
