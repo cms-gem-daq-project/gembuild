@@ -254,6 +254,15 @@ then
     exit 1
 fi
 
+## Common regex strings
+# repo release is X.Y, independent of package tag version
+rre='^([0-9]+)\.([0-9]+)$'
+# basic package version unit is vX.Y.Z
+vre='^v?(\.)?([0-9]+)\.([0-9]+)\.([0-9]+)'
+gre='(git[0-9a-fA-F]{6,8})'
+relre='(^release/gemos-[0-9]+\.[0-9]+$)'
+
+## Common variables
 BUILD_VER=$(${CONFIG_DIR}/tag2rel.sh | \
                    awk '{split($$0,a," "); print a[5];}' | \
                    awk '{split($$0,b,":"); print b[2];}')
@@ -261,19 +270,22 @@ BUILD_TAG=$(${CONFIG_DIR}/tag2rel.sh | \
                    awk '{split($$0,a," "); print a[8];}' | \
                    awk '{split($$0,b,":"); print b[2];}')
 
-BRANCH_NAME=$(git rev-parse HEAD)
+# ## because CI_COMMIT_REF_NAME is *either* the branch *or* the tag of the running job
+## with this we could get multiple hits
+# BRANCH_NAME=$(git branch --contains ${CI_COMMIT_REF_NAME})
+## with this we run the risk that a new push invalidates this variable
+BRANCH_NAME=$(git branch -vvr | egrep $(git rev-parse --short HEAD))
+BRANCH_NAME=$(echo ${BRANCH_NAME#*origin/} | awk '{split($$0,a," "); print a[1];}')
 
-if [[ "${BRANCH_NAME}" =~ '^release/gemos-' ]]
+if [[ "${BRANCH_NAME}" =~ ${relre} ]]
 then
-    REL_VERSION=${${BRAMCH_NAME##*/}##*-}
+    REL_VERSION=${BRANCH_NAME##*/}
+    REL_VERSION=${REL_VERSION##*-}
 else
     REL_VERSION=unstable-PKG-${BUILD_VER%.*}
 fi
 
-## Would like to have a single gemos repo, with some "release" version, but requires
-#  that all packages are tracked and maintained in concert, and adds compleity without
-#  clear path to maintainability -- future enhancement to extract the gemos release
-#  from the branch name, and follow a strict procedure for creating releases
-# ## because CI_COMMIT_REF_NAME is either the branch or the tag of the job
-# CI_BRANCH_NAME=$(git branch --contains ${CI_COMMIT_REF_NAME})
-# REL_VERSION=${CI_BRANCH_NAME##*/}
+echo BRANCH_NAME is ${BRANCH_NAME}
+echo REL_VERSION is ${REL_VERSION}
+echo BUILD_VER is ${BUILD_VER}
+echo BUILD_TAG is ${BUILD_TAG}

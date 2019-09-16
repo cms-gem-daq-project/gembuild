@@ -114,30 +114,35 @@ trap cleanup SIGHUP SIGINT SIGQUIT SIGABRT SIGTERM
 # BASE_DIR=${PWD}
 
 ##### RPMs
-# repo release is X.Y, independent of package tag version
-rre='^([0-9]+)\.([0-9]+)$'
-# basic package version unit is vX.Y.Z
-vre='^v?(\.)?([0-9]+)\.([0-9]+)\.([0-9]+)'
-gre='(git[0-9a-fA-F]{6,8})'
 
 ## map source dir to output dir
 echo "Figuring out appropriate tag"
-## choose the correct of: base|testing|unstable
-if [[ ${BUILD_TAG} =~ (dev) ]] || [[ ${CI_COMMIT_REF_NAME} =~ (develop) ]] 
+## choose the correct of: base|prerel|testing|unstable
+if [[ ${BRANCH_NAME} =~ ${relre} ]]
 then
-    ## unstable for dev tag or 'develop' branch
-    DEPLOY_DIR=${EOS_UNSTABLE_DIR}
-    TAG_REPO_TYPE=/unstable
-elif [[ ${BUILD_VER}${BUILD_TAG} =~ $vre-final$ ]] &&  [[ ${CI_COMMIT_REF_NAME} =~ (^(master$|release/)) ]]
+    DEPLOY_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}
+    if [[ ${BUILD_VER}${BUILD_TAG} =~ $vre-final$ ]]
+    then
+        ## base for tag vX.Y.Z
+        TAG_REPO_TYPE=base/base
+    elif [[ ${BUILD_TAG} =~ (alpha|beta|pre|rc) ]]
+    then
+        ## prerel for tag vX.Y.Z-(alpha|beta|pre|rc)\d+-git<hash> or untagged on release/*
+        TAG_REPO_TYPE=prerel/prerel
+    else
+        ## testing for untagged merges onto release/*
+        TAG_REPO_TYPE=testing/testing
+    fi
+elif [[ ${BUILD_TAG} =~ (-final$) ]] && [[ ${BRANCH_NAME} =~ (^master$|${relre}) ]]
 then
     ## base for tag vX.Y.Z
     DEPLOY_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}
     TAG_REPO_TYPE=base/base
-elif [[ ${BUILD_TAG} =~ (alpha|beta|pre|rc) ]] || [[ ${CI_COMMIT_REF_NAME} =~ (^release) ]]
+elif [[ ${BUILD_TAG} =~ (dev) ]] || [[ ${BRANCH_NAME} =~ (^develop$) ]] 
 then
-    ## testing for tag vX.Y.Z-(alpha|beta|pre|rc)\d+-git<hash> or untagged on release/*
-    DEPLOY_DIR=${EOS_RELEASE_DIR}/${REL_VERSION}
-    TAG_REPO_TYPE=testing/testing
+    ## unstable for dev tag or 'develop' branch
+    DEPLOY_DIR=${EOS_UNSTABLE_DIR}
+    TAG_REPO_TYPE=/unstable
 else
     ## unstable for unknown or untagged
     DEPLOY_DIR=${EOS_UNSTABLE_DIR}
@@ -152,6 +157,14 @@ EOS_REPO_PATH=${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}/${CI_REPO_DIR}/${TAG_REPO_TYPE%%
 
 EOS_SW_PATH=${EOS_BASE_WEB_DIR}/${EOS_SW_DIR}
 EOS_DOCS_PATH=${EOS_BASE_WEB_DIR}/${EOS_DOCS_DIR%%/${CI_PROJECT_NAME}}
+
+echo TAG_REPO_TYPE is ${TAG_REPO_TYPE}
+echo DEPLOY_DIR is ${DEPLOY_DIR}
+echo CI_DOCS_DIR is ${CI_DOCS_DIR}
+echo CI_REPO_DIR is ${CI_REPO_DIR}
+echo EOS_REPO_PATH is ${EOS_REPO_PATH}
+echo EOS_SW_PATH is ${EOS_SW_PATH}
+echo EOS_DOCS_PATH is ${EOS_DOCS_PATH}
 
 echo "Tag ${BUILD_VER}${BUILD_TAG} determined to be ${TAG_REPO_TYPE#*/}"
 
@@ -173,13 +186,16 @@ pushd ${ARTIFACTS_DIR}/api
 if [ -n "${BUILD_TAG}" ]
 then
     ## we are on a release X.Y version
-    if [[ ${BUILD_TAG} =~ (dev) ]] || [[ ${CI_COMMIT_REF_NAME} =~ (develop) ]] 
+    if [[ ${BUILD_TAG} =~ (dev) ]] || [[ ${BRANCH_NAME} =~ (^develop$) ]] 
     then
         publishDocs "unstable"
-    elif [[ "${BUILD_TAG}" =~ -final$ ]] &&  [[ ${CI_COMMIT_REF_NAME} =~ (^(master$|release/)) ]]
+    elif [[ ${BUILD_TAG} =~ (-final$) ]] && [[ ${BRANCH_NAME} =~ (^master$|${relre}) ]]
     then
         publishDocs "base"
-    elif [[ ${BUILD_TAG} =~ (alpha|beta|pre|rc) ]] || [[ ${CI_COMMIT_REF_NAME} =~ (^release) ]]
+    elif [[ ${BUILD_TAG} =~ (alpha|beta|pre|rc) ]] && [[ ${BRANCH_NAME} =~ ${relre} ]]
+    then
+        publishDocs "testing"
+    elif [[ ${BRANCH_NAME} =~ ${relre} ]]
     then
         publishDocs "testing"
     else

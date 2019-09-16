@@ -13,17 +13,12 @@ PACKAGE_NAME=${5}
 ## will fail for unset or unbound variables
 
 RELEASE_PLATFORM=${GEM_OS}_${GEM_ARCH}
-#PYTHON_VERSION=${PYEXE}$(${PYEXE} -c "import sys; sys.stdout.write(sys.version[:3])")
-#BUILD_COMPILER=${COMPILER}$(${COMPILER} -dumpfullversion -dumpversion | sed -e 's|\.|_|g')
-#RELEASE_PLATFORM=${RELEASE_PLATFORM}_${BUILD_COMPILER}
+# PYTHON_VERSION=${PYEXE}$(${PYEXE} -c "import sys; sys.stdout.write(sys.version[:3])")
+# BUILD_COMPILER=${COMPILER}$(${COMPILER} -dumpfullversion -dumpversion | sed -e 's|\.|_|g')
+# RELEASE_PLATFORM=${RELEASE_PLATFORM}_${BUILD_COMPILER}
 
 mkdir -p ${ARTIFACTS_DIR}/repos/{tarballs,SRPMS}/${PACKAGE_NAME}
 mkdir -p ${ARTIFACTS_DIR}/repos/${RELEASE_PLATFORM}/{RPMS,DEBUGRPMS}/${PACKAGE_NAME}
-# mkdir -p ${ARTIFACTS_DIR}/repos/${PACKAGE_TYPE}/{tarballs,SRPMS}
-# mkdir -p ${ARTIFACTS_DIR}/repos/${PACKAGE_TYPE}/${RELEASE_PLATFORM}/{RPMS,DEBUGRPMS}
-
-## only for debugging
-#tree -df ${ARTIFACTS_DIR}/repos
 
 find ${SOURCERPM_DIR} \( -type d -wholename ${ARTIFACTS_DIR}/repos \) -prune -o -iname '*.src.rpm' \
      -print0 -exec mv -t ${ARTIFACTS_DIR}/repos/SRPMS/${PACKAGE_NAME} {} \+ 2>&1 > /dev/null
@@ -65,6 +60,30 @@ repo_gpgcheck=1
 [gemos-base-debug]
 name     = gemos -- ${REL_VERSION} debuginfo RPMs
 baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/${RELEASE_PLATFORM}/DEBUGRPMS
+gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-prerel]
+name     = gemos -- ${REL_VERSION} prerel RPMs
+baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/RPMS
+gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-prerel-sources]
+name     = gemos -- ${REL_VERSION} prerel source RPMs
+baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/SRPMS
+gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-prerel-debug]
+name     = gemos -- ${REL_VERSION} prerel debuginfo RPMs
+baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/DEBUGRPMS
 gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
 enabled  = 0
 gpgcheck = 1
