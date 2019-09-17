@@ -49,7 +49,7 @@ $(TargetSRPMName): $(PackagePrepFile) $(PackageSetupFile) | rpmprep
 	    --define "release $(PACKAGE_NOARCH_RELEASE)" \
 	    --define "_binary_payload 1" \
 	    --define "_topdir $(RPMBUILD_DIR)/$(GEM_ARCH)" \
-	    $(RPMBUILD_DIR)/dist/${PackageName}.spec;
+	    $(RPMBUILD_DIR)/dist/$(PackageName).spec;
 	touch $@
 
 $(TargetRPMName): $(PackagePrepFile) $(PackageSetupFile) | rpmprep
@@ -58,7 +58,7 @@ $(TargetRPMName): $(PackagePrepFile) $(PackageSetupFile) | rpmprep
 	    --define "release $(PACKAGE_NOARCH_RELEASE).$(GEM_OS).python$(PYTHON_VERSION)" \
 	    --define "_binary_payload 1" \
 	    --define "_topdir $(RPMBUILD_DIR)/$(GEM_ARCH)" \
-	    $(RPMBUILD_DIR)/dist/${PackageName}.spec
+	    $(RPMBUILD_DIR)/dist/$(PackageName).spec
 	rename $(PACKAGE_FULL_VERSION) $(PACKAGE_FULL_VERSION)_$(PACKAGE_NOARCH_RELEASE) $(RPMBUILD_DIR)/$(GEM_ARCH)/SOURCES/*$(PACKAGE_FULL_VERSION).tar.gz
 	touch $@
 
@@ -79,7 +79,7 @@ _rpmarm: all rpmprep
 	rpmbuild --quiet -bb --clean \
 	    --define "_binary_payload 1" \
 	    --define "_topdir $(RPMBUILD_DIR)/arm" \
-	    $(RPMBUILD_DIR)/dist/${PackageName}.spec
+	    $(RPMBUILD_DIR)/dist/$(PackageName).spec
 
 _bdistbuild: rpmprep
 	cd $(RPMBUILD_DIR) && python setup.py \
@@ -177,7 +177,7 @@ cd $(RPMBUILD_DIR) && python setup.py \
     --spec-only;
 mkdir -p $(RPMBUILD_DIR)/$(GEM_ARCH)/SOURCES;
 mv $(RPMBUILD_DIR)/dist/*.tar.gz $(RPMBUILD_DIR)/$(GEM_ARCH)/SOURCES/;
-sed -i '/%define release/d' $(RPMBUILD_DIR)/dist/${PackageName}.spec
+sed -i '/%define release/d' $(RPMBUILD_DIR)/dist/$(PackageName).spec
 endef
 
 .PHONY: cleanrpm cleanallrpm

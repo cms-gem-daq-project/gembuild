@@ -127,7 +127,7 @@ $(PackageSpecFile): $(ProjectPath)/config/specTemplate.spec $(PackageSourceTarba
 	sed -i 's#__requires_list__#$(REQUIRED_PACKAGE_LIST)#'             $(RPM_DIR)/$(PackageName).spec
 	sed -i 's#__build_requires_list__#$(BUILD_REQUIRED_PACKAGE_LIST)#' $(RPM_DIR)/$(PackageName).spec
 
-#	@if [ "${BuildDebuginfoRPM}" == "1" ]; then \
+#	@if [ "$(BuildDebuginfoRPM)" == "1" ]; then \
 #	    echo "sed -i '1 i\%define _build_debuginfo_package %{nil}' $(RPM_DIR)/$(PackageName).spec"; \
 #	    sed -i '1 i\%define _build_debuginfo_package %{nil}' $(RPM_DIR)/$(PackageName).spec; \
 #	fi

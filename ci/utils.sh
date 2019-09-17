@@ -175,6 +175,8 @@ publishRepository () {
     popd
 
     echo "Updating the repositories"
+    find . -iname '*.repo' -print0 -exec \
+         sed -i "s|\${EOS_SITE_URL}|${EOS_SITE_URL}|g" {} \:
     rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
           ${ARTIFACTS_DIR}/repos/*.repo ${KRB_USERNAME}@lxplus.cern.ch:${EOS_SW_PATH}/repos
 

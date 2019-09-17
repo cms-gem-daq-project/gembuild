@@ -39,103 +39,128 @@ rename tar. t ${ARTIFACTS_DIR}/repos/tarballs/${PACKAGE_NAME}*tar*
 if [[ ${REL_VERSION} =~ PKG ]]
 then
     REL_VERSION=$(echo ${REL_VERSION} | sed "s|PKG|${PACKAGE_NAME}|g")
-fi
-cat <<EOF > ${ARTIFACTS_DIR}/repos/gemos_${REL_VERSION/./_}_${RELEASE_PLATFORM}.repo
-[gemos-base]
-name     = gemos -- ${REL_VERSION} RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/${RELEASE_PLATFORM}/RPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 1
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-base-sources]
-name     = gemos -- ${REL_VERSION} source RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/SRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-base-debug]
-name     = gemos -- ${REL_VERSION} debuginfo RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/${RELEASE_PLATFORM}/DEBUGRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-prerel]
-name     = gemos -- ${REL_VERSION} prerel RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/RPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-prerel-sources]
-name     = gemos -- ${REL_VERSION} prerel source RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/SRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-prerel-debug]
-name     = gemos -- ${REL_VERSION} prerel debuginfo RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/DEBUGRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-testing]
-name     = gemos -- ${REL_VERSION} testing RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/testing/${RELEASE_PLATFORM}/RPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-testing-sources]
-name     = gemos -- ${REL_VERSION} testing source RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/testing/${RELEASE_PLATFORM}/SRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
-[gemos-testing-debug]
-name     = gemos -- ${REL_VERSION} testing debuginfo RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/testing/${RELEASE_PLATFORM}/DEBUGRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
-enabled  = 0
-gpgcheck = 1
-repo_gpgcheck=1
-
+    cat <<EOF > ${ARTIFACTS_DIR}/repos/gemos_${REL_VERSION/./_}_${RELEASE_PLATFORM}.repo
 [gemos-unstable]
 name     = gemos -- unstable RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/RPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/RPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
 enabled  = 0
 gpgcheck = 1
 repo_gpgcheck=1
 
 [gemos-unstable-sources]
 name     = gemos -- unstable source RPMs
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/unstable/SRPMS/${RELEASE_PLATFORM}
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/SRPMS/${RELEASE_PLATFORM}
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
 enabled  = 0
 gpgcheck = 1
 repo_gpgcheck=1
 
 [gemos-unstable-debug]
 name     = gemos -- unstable debuginfo RPMS
-baseurl  = ${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/DEBUGRPMS
-gpgkey   = ${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/DEBUGRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
 enabled  = 0
 gpgcheck = 1
 repo_gpgcheck=1
 EOF
+else
+    cat <<EOF > ${ARTIFACTS_DIR}/repos/gemos_${REL_VERSION/./_}_${RELEASE_PLATFORM}.repo
+[gemos-base]
+name     = gemos -- ${REL_VERSION} RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/${RELEASE_PLATFORM}/RPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 1
+gpgcheck = 1
+repo_gpgcheck=1
 
+[gemos-base-sources]
+name     = gemos -- ${REL_VERSION} source RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/SRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-base-debug]
+name     = gemos -- ${REL_VERSION} debuginfo RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/${RELEASE_PLATFORM}/DEBUGRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-prerel]
+name     = gemos -- ${REL_VERSION} prerel RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/RPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-prerel-sources]
+name     = gemos -- ${REL_VERSION} prerel source RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/SRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-prerel-debug]
+name     = gemos -- ${REL_VERSION} prerel debuginfo RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/prerel/${RELEASE_PLATFORM}/DEBUGRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-testing]
+name     = gemos -- ${REL_VERSION} testing RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/testing/${RELEASE_PLATFORM}/RPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-testing-sources]
+name     = gemos -- ${REL_VERSION} testing source RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/testing/${RELEASE_PLATFORM}/SRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-testing-debug]
+name     = gemos -- ${REL_VERSION} testing debuginfo RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/testing/${RELEASE_PLATFORM}/DEBUGRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-unstable]
+name     = gemos -- unstable RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/RPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-unstable-sources]
+name     = gemos -- unstable source RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/SRPMS/${RELEASE_PLATFORM}
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-unstable-debug]
+name     = gemos -- unstable debuginfo RPMS
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/DEBUGRPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 0
+gpgcheck = 1
+repo_gpgcheck=1
+EOF
+fi
 
