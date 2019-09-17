@@ -33,7 +33,7 @@ find ${SOURCERPM_DIR} \( -type d -wholename ${ARTIFACTS_DIR}/repos \) -prune -o 
      \( -iname '*.tar.gz' -o -iname '*.tar.bz' -o -iname '*.tbz2' -o -iname '*.tgz' -o -iname '*.zip' \) \
      -print0 -exec mv -t ${ARTIFACTS_DIR}/repos/tarballs/${PACKAGE_NAME} {} \+ 2>&1 > /dev/null
 
-rename tar. t ${ARTIFACTS_DIR}/repos/tarballs//${PACKAGE_NAME}*tar*
+rename tar. t ${ARTIFACTS_DIR}/repos/tarballs/${PACKAGE_NAME}*tar*
 
 ### dump the yum repo file
 if [[ ${REL_VERSION} =~ PKG ]]

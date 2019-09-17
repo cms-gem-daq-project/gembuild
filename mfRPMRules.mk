@@ -23,11 +23,11 @@ PACKAGE_FULL_RELEASE=$(PACKAGE_NOARCH_RELEASE).$(GEM_OS).$(BUILD_COMPILER)
 endif
 
 ifndef REQUIRED_PACKAGE_LIST
-REQUIRED_PACKAGE_LIST=$(shell awk 'BEGIN{IGNORECASE=1} /define $(PackageName)_REQUIRED_PACKAGE_LIST/ {print $$3;}' $(PackagePath)/include/packageinfo.h)
+REQUIRED_PACKAGE_LIST=$(shell awk 'BEGIN{IGNORECASE=1} /define $(PackageName)_REQUIRED_PACKAGE_LIST/ {print $$3;}' $(PackageIncludeDir)/packageinfo.h)
 endif
 
 ifndef BUILD_REQUIRED_PACKAGE_LIST
-BUILD_REQUIRED_PACKAGE_LIST=$(shell awk 'BEGIN{IGNORECASE=1} /define $(PackageName)_BUILD_REQUIRED_PACKAGE_LIST/ {print $$3;}' $(PackagePath)/include/packageinfo.h)
+BUILD_REQUIRED_PACKAGE_LIST=$(shell awk 'BEGIN{IGNORECASE=1} /define $(PackageName)_BUILD_REQUIRED_PACKAGE_LIST/ {print $$3;}' $(PackageIncludeDir)/packageinfo.h)
 endif
 
 REQUIRES_LIST=0

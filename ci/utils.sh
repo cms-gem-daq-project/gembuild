@@ -274,8 +274,13 @@ BUILD_TAG=$(${CONFIG_DIR}/tag2rel.sh | \
 ## with this we could get multiple hits
 # BRANCH_NAME=$(git branch --contains ${CI_COMMIT_REF_NAME})
 ## with this we run the risk that a new push invalidates this variable
-BRANCH_NAME=$(git branch -vvr | egrep $(git rev-parse --short HEAD))
-BRANCH_NAME=$(echo ${BRANCH_NAME#*origin/} | awk '{split($$0,a," "); print a[1];}')
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+if [[ ${BRANCH_NAME} =~ HEAD ]]
+then
+    BRANCH_NAME=$(git branch -vvr | egrep $(git rev-parse --short HEAD))
+    BRANCH_NAME=$(echo ${BRANCH_NAME#*origin/} | awk '{split($$0,a," "); print a[1];}')
+fi
 
 if [[ "${BRANCH_NAME}" =~ ${relre} ]]
 then
