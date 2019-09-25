@@ -28,3 +28,5 @@ GEM_OS:=peta
 
 CXX:=arm-linux-gnueabihf-g++
 CC:=arm-linux-gnueabihf-gcc
+
+$(info WARNING Make sure that you have set up an environment to provide $(CXX) and $(CC))
