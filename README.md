@@ -29,6 +29,11 @@ Most common definitions needed, and basic targets.
   * `BUILD_VERSION`: will be used as the `Release`, and is extracted using `tag2rel.sh`
   * `PREREL_VERSION`: will be used as part of the `pip` package name, and is extracted using `tag2rel.sh`
 
+##### Compilation
+Sets up common compiler and compiler flags
+* `LDFLAGS` set to `-g`
+* `OPTFLAGS` set (if not set) to `-g -O2`
+
 ##### `UseSONAMEs`
 This variable is be used to determine whether or not the libraries will be compiled with the `soname` option, default is yes, and in that case, the following variables will be set:
 * `LibrarySONAME` will be set to `$(@F).$(PACKAGE_ABI_VERSION)`
@@ -51,17 +56,21 @@ This variable is be used to determine whether or not the libraries will be compi
 * `PackageObjectDir`: location of object files, defaults to `$(PackageSourceDir)/linux/$(Arch)`
 
 ##### Common targets (implicit and explicit)
-* Defines `default`, `clean`, `build`, `doc`, `all`, `release`, `install` and `uninstall` `make` targets
+* Defines `all`, `build`, `clean`, `cleanall`, `default`, `doc` `make` targets
   * `all` has a dependency on `build`
-* Provides `release`, `install` and `uninstall` `make` targets
+  * `cleanall` has a dependency on `clean`, `cleandoc`, `cleanallrpm`, `cleanrelease`
+* Provides `cleanrelease`, `release`, `install` and `uninstall` `make` targets
+  * `cleanrelease`  will remove all packaged files from the publishing prep location
   * `release` depends on `rpm` and will copy all packaged files to the structure expected by the CI for publishing
   * `install` depends on `all` and will copy all generated files to the expected installed package structure
   * `uninstall` removes any files created during `install`
+* Provides `checkabi` and several dependent targets
+  * Performs an ABI check on two versions of a library
 
 #### `mfPythonDefs.mk`
 Additional definitions for `python` packages, and `python` package specific targets.
-
-* Provides `install-site` and `uninstall-site` `make` targets
+* `PYVER` is the version of the `python` interpreter to use, e.g., `pypy`, `python`, `python2`, `python3.6`, etc.,
+* Provides `install-site` and `uninstall-site` `make` targets (which are also added as dependencies of the generic `(un)install` targets)
   * `install-site` depends on `rpmprep` and will copy all generated files to the expected installed package structure
   * `uninstall-site` removes any files created during `install-site`
 

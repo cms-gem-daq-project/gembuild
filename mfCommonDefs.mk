@@ -113,7 +113,7 @@ $(info Target $@ has outdated prereqs $^)
 $(info Target $@ has order-only prereqs $|)
 endef
 
-.PHONY: all build clean cleanall default doc install uninstall release
+.PHONY: all build clean cleanrelease cleanall default doc install uninstall release
 
 ## @common default target, no dependencies
 default:
@@ -122,7 +122,7 @@ default:
 clean:
 
 ## @common clean everything (objects, docs, packages)
-cleanall: clean cleandoc cleanallrpm
+cleanall: clean cleandoc cleanallrpm cleanrelease
 
 ## @common build package, override with how to compile your package
 build:
@@ -231,6 +231,10 @@ release: rpm doc
 	$(MakeDir) $(ProjectPath)/release/api
 	-rsync -ahcX --progress --partial $(RPM_DIR)/repos $(ProjectPath)/release/
 	-if [ -d $(PackageDocsDir) ]; then rsync -ahcX --progress --partial $(PackageDocsDir)/ $(ProjectPath)/release/api/$(PackageName)/; fi
+
+## @common clean up generated packages from a release
+cleanrelease:
+	$(RM) $(ProjectPath)/release
 
 # COLORS
 GREEN  := $(shell tput -Txterm setaf 2)
