@@ -1,7 +1,7 @@
 BUILD_HOME?=$(shell dirname `pwd`)
 $(info Using BUILD_HOME=$(BUILD_HOME))
 
-INSTALL_PATH=/opt/$(Project)
+INSTALL_PATH?=/opt/$(Project)
 
 CMSGEMOS_ROOT?=/opt/cmsgemos
 CACTUS_ROOT?=/opt/cactus

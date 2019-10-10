@@ -52,14 +52,13 @@ endif
 install: install-site
 install-site: rpmprep
 ifneq ($(Arch),arm)
-	$(MakeDir) $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)
 	if [ -d pkg ]; then \
 	   cd pkg; \
 	   find $(Namespace) \( -type d -iname scripts \) -prune -o -type f \
 	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/{} \; ; \
 	   cd $(Namespace)/scripts; \
 	   find . -type f \
-	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(CMSGEMOS_ROOT)/bin/$(ShortPackage)/{} \; ; \
+	       -exec install -D -m 755 {} $(INSTALL_PREFIX)opt/$(Namespace)/bin/$(ShortPackage)/{} \; ; \
 	fi
 endif
 
@@ -72,7 +71,7 @@ uninstall-pip:
 uninstall-site:
 ifneq ($(Arch),arm)
 	$(RM) $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)
-	$(RM) $(INSTALL_PREFIX)$(CMSGEMOS_ROOT)/bin/$(ShortPackage)
+	$(RM) $(INSTALL_PREFIX)opt/$(Namespace)/bin/$(ShortPackage)
 endif
 
 .PHONY: pip rpm rpmprep
