@@ -58,7 +58,7 @@ ifneq ($(Arch),arm)
 	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/{} \; ; \
 	   cd $(Namespace)/scripts; \
 	   find . -type f \
-	       -exec install -D -m 755 {} $(INSTALL_PREFIX)opt/$(Namespace)/bin/$(ShortPackage)/{} \; ; \
+	       -exec install -D -m 755 {} $(INSTALL_PREFIX)$(INSTALL_PATH)/bin/$(ShortPackage)/{} \; ; \
 	fi
 endif
 
@@ -71,7 +71,7 @@ uninstall-pip:
 uninstall-site:
 ifneq ($(Arch),arm)
 	$(RM) $(INSTALL_PREFIX)$(PYTHON_SITE_PREFIX)/$(Namespace)/$(ShortPackage)
-	$(RM) $(INSTALL_PREFIX)opt/$(Namespace)/bin/$(ShortPackage)
+	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/bin/$(ShortPackage)
 endif
 
 .PHONY: pip rpm rpmprep
