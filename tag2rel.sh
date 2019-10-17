@@ -62,6 +62,9 @@ Major:0 Minor:99 Patch:0 Release:0.3.pre10 Version:0.99.0 FullVersion:v0.99.0-pr
 #    Minor: 0.3.0
 #    Patch: 0.2.3
 
+# if there are no tags, version string should be
+#    0.0.0-untagged-<shorthash>git
+#    or maybe just untagged-<shorthash>git
 # probably better to try to use setuptools_scm, which does this natively, but want something generically applicable
 
 if [ -z ${1+x} ]
@@ -75,9 +78,14 @@ relver=1
 gitrev=$(git rev-parse --short HEAD 2>/dev/null)
 gitver=$(git describe --abbrev=6 --dirty --always --tags 2>/dev/null)
 
-## can fail if no tags are present, robustify
 tagcommit=$(git rev-list --tags --max-count=1 2>/dev/null)
-lasttag=$(git describe --tags ${tagcommit}  2>/dev/null)
+if [ ! -n ${tagcommit+x} ]
+then
+    lasttag=$(git describe --tags ${tagcommit} 2> /dev/null)
+else
+    ## In the case that there are no tags, set lasttag to the initial commit
+    lasttag=$(git rev-list --max-parents=0 HEAD 2> /dev/null)
+fi
 
 revision=0
 if [ ! -z ${lasttag+x} ]
