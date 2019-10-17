@@ -3,7 +3,7 @@ This package provides a set of generic scripts to standardize building of GEM DA
 
 ## Usage
 This repository should be checked out during a build, or added to the repository as a submodule at `REPO_BASE/config`
-Then, in the calling `Makefile`, the appropriate `include` should be made.
+Then, in the package `Makefile`, the appropriate `include` should be made.
 
 ## Contents
 This repository contains various common definitions and templates for driving the build process, as well as some scripts.
@@ -13,7 +13,7 @@ This script will extract automatically the version, build, and release informati
 For more information, execute `tag2rel.sh -h`
 
 ### `make` helpers
-Targets that are defined within with a leading `_` are not intended to be used outside of the config package.a
+Targets that are defined within with a leading `_` are not intended to be used outside of the `config` package.
 They should be neither overridden nor used as depndencies
 
 #### `mfCommonDefs.mk`
@@ -31,10 +31,12 @@ Most common definitions needed, and basic targets.
 
 ##### Compilation
 Sets up common compiler and compiler flags
-* `LDFLAGS` set to `-g`, and may be appended to in the makefile to add any additional desired flags to be passed to the linker
-* `LDLIBS` empty by default, and should be appended to in the makefile to add any additional libraries to link against
-* `OPTFLAGS` set (if not set) to `-g -O2`, this is overridden during special builds, e.g., `make checkabi`, where a specific optimization is desired
-* `SOFLAGS` set to `-shared `and may be appended to in the makefile to add any additional flags to be passed to the linker for creating shared objects
+* `CFLAGS` flags to pass to the `C` compiler
+* `CXXFLAGS` flags to pass to the `C++` compiler, will usually append `CFLAGS` before any `C` specific flags are added to `CFLAGS`
+* `LDFLAGS` set to `-g`, and may be appended to in the package `Makefile` to add any additional desired flags to be passed to the linker
+* `LDLIBS` empty by default, and should be appended to in the package `Makefile` to add any additional libraries to link against
+* `OPTFLAGS` set (if not already set) to `-g -O2`, this is overridden during special builds, e.g., `make checkabi`, where a specific optimization is desired
+* `SOFLAGS` set to `-shared `and may be appended to in the package `Makefile` to add any additional flags to be passed to the linker for creating shared objects
 
 ##### `UseSONAMEs`
 This variable is be used to determine whether or not the libraries will be compiled with the `soname` option, default is yes, and in that case, the following variables will be set:
@@ -58,12 +60,13 @@ This variable is be used to determine whether or not the libraries will be compi
 * `PackageObjectDir`: location of object files, defaults to `$(PackageSourceDir)/linux/$(Arch)`
 
 ##### Common targets (implicit and explicit)
-* Defines `all`, `build`, `clean`, `cleanall`, `default`, `doc` `make` targets
+* All targets can be printed with `make help` to get common information
+* Defines `all`, `build`, `clean`, `cleandoc`, `cleanrpm`, `cleanallrpm`, `cleanall`, `default`, `doc` `make` `.PHONY` targets, which should be implemented in the package `Makefile`
   * `all` has a dependency on `build`
   * `cleanall` has a dependency on `clean`, `cleandoc`, `cleanallrpm`, `cleanrelease`
-* Provides `cleanrelease`, `release`, `install` and `uninstall` `make` targets
+* Provides implmentation of `cleanrelease`, `release`, `install` and `uninstall` `.PHONBY` `make` targets
   * `cleanrelease`  will remove all packaged files from the publishing prep location
-  * `release` depends on `rpm` and will copy all packaged files to the structure expected by the CI for publishing
+  * `release` depends on `doc` and `rpm`, and will copy all packaged files to the structure expected by the CI for publishing
   * `install` depends on `all` and will copy all generated files to the expected installed package structure
   * `uninstall` removes any files created during `install`
 * Provides `checkabi` and several dependent targets
@@ -87,7 +90,7 @@ Allows setting of required packages, as well as build required packages from a `
   * `PackageSpecFile` is used to only update the spec file when necessary and is set to `$(RPM_DIR)/$(PackageName).spec`
 * targets
   * `$(PackageSpecFile)` depends on `$(ProjectPath)/config/specTemplate.spec`, and should be overridden if a more specific template is defined in the package, in order to ensure the RPMs are rebuilt when the spec file changes
-    * e.g., in your package `Makefile` set `$(PackageSpecFile): path/to/overide/template`
+    * e.g., in the package `Makefile` set `$(PackageSpecFile): path/to/overide/template`
   * `$(TargetSRPMName)` depends on `$(PackageSpecFile)` and has an order-only dependency on `rpmprep`
   * `$(TargetRPMName)` depends on `$(PackageSpecFile)` and has an order-only dependency on `rpmprep`
   * `rpmprep` should be defined to do any setup necessary between compiling and making the RPM, `rpm` depends on it
@@ -111,7 +114,7 @@ Sets up environment and rules for packaging `python` packages.
   * `rpmprep` should be defined to do any setup necessary between compiling and making the RPM, `rpm` depends on it
   * `PackagePrepFile` should populate the `pkg` (or `$(PackageDir)`) directory with up-to-date files for packaging
   * `PackageSetupFile` will populate the `$(PackageSetupFile)` with values from the environment
-    * e.g., in your package `Makefile` set `$(PackageSetupFile): path/to/overide/setup.py` (this file *must* be in one of the locations that the rule looks, see [here](#setuptemplatepy))
+    * e.g., in the package `Makefile` set `$(PackageSetupFile): path/to/overide/setup.py` (this file *must* be in one of the locations that the rule looks, see [here](#setuptemplatepy))
   * `cleanrpm` removes `$(RPMBUILD_DIR)`, note that it does *not* remove the RPMs
   * `cleanallrpm` removes `$(RPM_DIR)`
 
@@ -121,9 +124,7 @@ Sets up the environment for building `sphinx` documentation and provides the nec
 #### `mfZynq.mk`
 Extra definitions for building on a Xilinx `Zynq` SoC
 
-* `CFLAGS`
-* `LDLIBS` set to include locations provided in the `PETA_STAGE`
-* `LDFLAGS` turns on `-g` by default, adds library locations from `LDLIBS`
+* `LDFLAGS` adds library locations from `PETA_STAGE`
 * `INSTALL_PATH` is changed to `/mnt/persistent/$(Project)`
 * Compiler toolchain is set to the `arm-linux-gnueabihf` toolchain, provided by the `Xilinx` SDK, with `:=` operator
 

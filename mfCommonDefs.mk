@@ -66,6 +66,8 @@ $(info PREREL_VERSION $(PREREL_VERSION))
 CXX=g++
 CC=gcc
 
+CFLAGS=
+CXXFLAGS=
 LDFLAGS=-g
 LDLIBS=
 
@@ -132,6 +134,9 @@ build:
 
 ## @common build documentation, override with how to generate the documentation for your package
 doc:
+
+## @common clean documentation, override with how to remove the generateed documentation for your package
+cleandoc:
 
 ## @common Run all necessary steps to build complete package
 all: build

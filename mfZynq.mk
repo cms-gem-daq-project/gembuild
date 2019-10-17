@@ -8,17 +8,8 @@ CFLAGS= -fomit-frame-pointer -pipe -fno-common -fno-builtin \
 	-mthumb-interwork -mtune=cortex-a9 \
 	-DEMBED -Dlinux -D__linux__ -Dunix -fPIC \
 	--sysroot=$(PETA_STAGE)
-#	-isysroot=$(PETA_STAGE) \
-#	-I$$SYSROOT/usr/include \
-#	-I$$SYSROOT/include
 
-LDLIBS=	--sysroot=$(PETA_STAGE)
-#	-isysroot=$(PETA_STAGE) \
-#	-L$$SYSROOT/lib \
-#	-L$$SYSROOT/usr/lib \
-#	-L$$SYSROOT/ncurses
-
-LDFLAGS+=$(LDLIBS)
+LDFLAGS+=--sysroot=$(PETA_STAGE)
 
 INSTALL_PATH=/mnt/persistent/$(Project)
 
