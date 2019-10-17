@@ -114,7 +114,9 @@ $(info Target $@ has outdated prereqs $^)
 $(info Target $@ has order-only prereqs $|)
 endef
 
-.PHONY: all build clean cleanrelease cleanall default doc install uninstall release
+.PHONY: all build default doc install uninstall release
+.PHONY: clean cleanrpm cleandoc cleanallrpm cleanall
+.PHONY: cleanrelease
 
 ## @common default target, no dependencies
 default:
