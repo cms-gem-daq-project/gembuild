@@ -67,6 +67,7 @@ CXX=g++
 CC=gcc
 
 LDFLAGS=-g
+LDLIBS=
 
 OPTFLAGS?=-g -O2
 
@@ -88,11 +89,11 @@ ifeq ("$(UseSONAMEs)","yes")
     LibrarySONAME=$(@F).$(PACKAGE_ABI_VERSION)
     LibraryFull=$(@F).$(PACKAGE_FULL_VERSION)
     LibraryLink=$(@F)
-    LDFLAGS_SONAME?=-Wl,-soname,$(LibrarySONAME)
-    LDFLAGS+=$(LDFLAGS_SONAME)
+    SOFLAGS?=-shared -Wl,-soname,$(LibrarySONAME)
 else
     LibrarySONAME=$(@F)
     LibraryFull=$(@F)
+    SOFLAGS?=-shared
 endif
 
 define link-sonames =

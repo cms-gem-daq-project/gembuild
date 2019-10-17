@@ -31,15 +31,17 @@ Most common definitions needed, and basic targets.
 
 ##### Compilation
 Sets up common compiler and compiler flags
-* `LDFLAGS` set to `-g`
-* `OPTFLAGS` set (if not set) to `-g -O2`
+* `LDFLAGS` set to `-g`, and may be appended to in the makefile to add any additional desired flags to be passed to the linker
+* `LDLIBS` empty by default, and should be appended to in the makefile to add any additional libraries to link against
+* `OPTFLAGS` set (if not set) to `-g -O2`, this is overridden during special builds, e.g., `make checkabi`, where a specific optimization is desired
+* `SOFLAGS` set to `-shared `and may be appended to in the makefile to add any additional flags to be passed to the linker for creating shared objects
 
 ##### `UseSONAMEs`
 This variable is be used to determine whether or not the libraries will be compiled with the `soname` option, default is yes, and in that case, the following variables will be set:
 * `LibrarySONAME` will be set to `$(@F).$(PACKAGE_ABI_VERSION)`
 * `LibraryFull` will be set to `$(@F).$(PACKAGE_FULL_VERSION)`
 * `LibraryLink` will be set to `$(@F)`
-* `LDFLAGS_SONAME` will then be set to `-Wl,-soname,$(LibrarySONAME)`
+* `SOFLAGS` will have `-Wl,-soname,$(LibrarySONAME)` appended
 * The function `link-sonames` will create the appropriate symlinks to the compiled library
 * If `UseSONAMEs` is overridden to any other value
   * `LibrarySONAME` and `LibraryFull` will both be set to `$(@F)`, and no symlinks will be generated
