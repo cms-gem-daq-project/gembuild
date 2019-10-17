@@ -169,7 +169,7 @@ then
 
     if  [[ ${prerel} =~ ^rc ]]
     then
-        # because setuptools rewrites 'pre' as 'rc', need to count the number of 'pre' tags prior to addign the number of 'rc' tags
+        # because setuptools rewrites 'pre' as 'rc', need to count the number of 'pre' tags prior to adding the number of 'rc' tags
         # or we enforce that 'pre' and 'rc' are the "same" class, 'rc'>'pre',
         # and must numerically increase e.g., pre1->pre2->pre3->rc4->rc5
         pretags=( $(git tag -l "*${basever}-pre*") )
@@ -188,6 +188,8 @@ then
 else
     basever=untagged
     buildtag="-dev${revision}"
+    relver=0.0.${revision}
+    buildtag="untagged.dev${revision}"
 fi
 
 if ! [[ ${basever} =~ "untagged" ]]

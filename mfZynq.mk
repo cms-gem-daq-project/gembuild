@@ -11,7 +11,7 @@ CFLAGS= -fomit-frame-pointer -pipe -fno-common -fno-builtin \
 
 LDFLAGS+=--sysroot=$(PETA_STAGE)
 
-INSTALL_PATH=/mnt/persistent/$(Project)
+INSTALL_PATH=/mnt/persistent/$(ShortProject)
 
 GEM_PLATFORM:=xilinx-peta
 GEM_ARCH:=armv7l

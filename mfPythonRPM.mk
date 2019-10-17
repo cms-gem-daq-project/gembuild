@@ -1,6 +1,7 @@
 # Created with insights from
 ## amc13/config/mfPythonRPMRules.mk
 
+ShortProject?=$(Project)
 ProjectPath?=$(BUILD_HOME)/$(Project)
 PackagePath?=$(ProjectPath)
 RPM_DIR:=$(PackagePath)/rpm
@@ -141,10 +142,10 @@ _bdistbuild: rpmprep
 	    bdist --formats=bztar,gztar,zip
 
 _pipharvest: $(TargetPIPName)
-	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(Project)
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(ShortProject)
 
 _rpmharvest: $(TargetSRPMName) $(TargetRPMName)
-	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(Project)
+	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(ShortProject)
 
 $(PackageSetupFile): $(ProjectPath)/config/setupTemplate.py
 	$(MakeDir) $(RPMBUILD_DIR)
