@@ -49,8 +49,8 @@ fail-pyinstall:
 #	$(error "Unable to run install-site due to unset variables")
 endif
 
-## @python-common install the python site-package
 install: install-site
+## @python-common install the python site-package
 install-site: rpmprep
 ifneq ($(Arch),arm)
 	if [ -d pkg ]; then \
@@ -63,8 +63,8 @@ ifneq ($(Arch),arm)
 	fi
 endif
 
-## @python-common uninstall the python pip package
 uninstall: uninstall-site
+## @python-common uninstall the python pip package
 uninstall-pip:
 	pip uninstall $(PackageName)
 
@@ -147,7 +147,7 @@ _pipharvest: $(TargetPIPName)
 _rpmharvest: $(TargetSRPMName) $(TargetRPMName)
 	$(ProjectPath)/config/ci/generate_repo.sh $(GEM_OS) $(GEM_ARCH) $(RPM_DIR) $(RPMBUILD_DIR) $(ShortProject)
 
-$(PackageSetupFile): $(ProjectPath)/config/setupTemplate.py
+$(PackageSetupFile): $(ProjectPath)/config/setupTemplate.py $(ProjectPath)/config/setupTemplate.cfg
 	$(MakeDir) $(RPMBUILD_DIR)
 
 	if [ -e $(PackagePath)/setup.py ]; then \
