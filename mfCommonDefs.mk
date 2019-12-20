@@ -199,6 +199,25 @@ install: all
 	touch MAINTAINER.md CHANGELOG.md README.md LICENSE
 endif
 
+ifeq ($(Arch),x86_64)
+else
+PETA_PATH?=/opt/gem-peta-stage
+.PHONY: crosslibinstall crosslibuninstall
+
+## @common install libraries for cross-compilation, if needed extend install in your package makefile with crosslibinstall
+crosslibinstall:
+	echo "Installing cross-compiler libs"
+	if [ -d $(PackageLibraryDir) ]; then \
+	   cd $(PackageLibraryDir); \
+	   find . -type f -exec sh -ec 'install -D -m 755 $$0 $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)/lib/$$0' {} \; ; \
+	   find . -type l -exec sh -ec 'if [ -n "$${0}" ]; then ln -sf $$(basename $$(readlink $$0)) $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)/lib/$${0##./}; fi' {} \; ; \
+	fi
+
+## @common uninstall libraries for cross-compilation, if needed extend uninstall unin your package makefile with crosslibuninstall
+crosslibuninstall:
+	$(RM) $(INSTALL_PREFIX)$(PETA_PATH)/$(TARGET_BOARD)/$(INSTALL_PATH)
+endif
+
 ## @common uninstall package from `INSTALL_PREFIX`
 uninstall:
 	$(RM) $(INSTALL_PREFIX)$(INSTALL_PATH)/{bin,etc,include,lib,scripts}

@@ -14,7 +14,7 @@ For more information, execute `tag2rel.sh -h`
 
 ### `make` helpers
 Targets that are defined within with a leading `_` are not intended to be used outside of the `config` package.
-They should be neither overridden nor used as depndencies
+They should be neither overridden nor used as dependencies
 
 #### `mfCommonDefs.mk`
 Most common definitions needed, and basic targets.
@@ -64,11 +64,14 @@ This variable is be used to determine whether or not the libraries will be compi
 * Defines `all`, `build`, `clean`, `cleandoc`, `cleanrpm`, `cleanallrpm`, `cleanall`, `default`, `doc` `make` `.PHONY` targets, which should be implemented in the package `Makefile`
   * `all` has a dependency on `build`
   * `cleanall` has a dependency on `clean`, `cleandoc`, `cleanallrpm`, `cleanrelease`
-* Provides implmentation of `cleanrelease`, `release`, `install` and `uninstall` `.PHONBY` `make` targets
+* Provides implementation of `cleanrelease`, `release`, `install` and `uninstall` `.PHONY` `make` targets
   * `cleanrelease`  will remove all packaged files from the publishing prep location
   * `release` depends on `doc` and `rpm`, and will copy all packaged files to the structure expected by the CI for publishing
   * `install` depends on `all` and will copy all generated files to the expected installed package structure
   * `uninstall` removes any files created during `install`
+* Provides implementation of `crosslibinstall` and `crosslibuninstall` `.PHONY` `make` targets for non-`x86_64` architectures
+  * `crosslibinstall` will place the cross-compiled libraries into the `INSTALL_PATH` tree where they would appear in the `gem-peta-stage` area
+  * `crosslibuninstall` removes any files created during `crosslibinstall`
 * Provides `checkabi` and several dependent targets
   * Performs an ABI check on two versions of a library
 
