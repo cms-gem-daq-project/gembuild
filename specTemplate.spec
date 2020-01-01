@@ -16,6 +16,7 @@
 %define _buildarch __buildarch__
 #%%define _includedirs __includedirs__
 
+%global _binaries_in_noarch_packages_terminate_build 0
 %global _unpackaged_files_terminate_build 0
 
 ### find . -type d -wholename '*/lib/arm'
@@ -39,8 +40,14 @@ URL: %{_url}
 # Source: %{_source_url}/%{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2
 BuildRoot: %{_tmppath}/%{_packagename}-%{_version}-%{_release}-buildroot
 Prefix: %{_prefix}
+%if 0%{?_requires}
 Requires: __requires_list__
+%endif
+
+%if 0%{?_build_requires}
 BuildRequires: __build_requires_list__
+%endif
+
 %if %{is_arm}
 AutoReq: no
 %endif
@@ -48,22 +55,27 @@ AutoReq: no
 %description
 __description__
 
-## Only build devel and debuginfo RPMs for non-ARM
+## Only build devel RPMs for non-ARM
 %if %not_arm
 %package -n %{_packagename}-devel
-Summary: Development package for %{_summary}
+Summary: Development files for %{_packagename}
 Requires: %{_packagename}
 
 %description -n %{_packagename}-devel
-__description__
+Development headers for the %{_packagename} package
 
+%endif
+
+## Only build debuginfo RPMs for non-ARM?
+#%%%if %not_arm
 %package -n %{_packagename}-debuginfo
-Summary: Debuginfo for %{_summary}
-Requires: %{_packagename}
+Summary: Debuginfos for %{_packagename}
+Requires: %{_packagename}, %{_packagename}-devel
 
 %description -n %{_packagename}-debuginfo
-__description__
-%endif
+Debuginfos for the %{_packagename} package
+
+#%%%endif
 
 # %pre
 
@@ -73,9 +85,18 @@ __description__
 mv %{_sourcedir}/%{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2 ./
 tar xjf %{_project}-%{_longpackage}-%{_version}-%{_short_release}.tbz2
 
+## update extracted timestamps if doing a git build
+find %{_project}/%{_packagename} -type f -iname '*.h' -print0 -exec touch {} \+
+find %{_project}/%{_packagename} -type f -iname '*.cpp' -print0 -exec touch {} \+
+find %{_project}/%{_packagename} -type f -iname '*.d' -print0 -exec touch {} \+
+find %{_project}/%{_packagename} -type f -iname '*.o' -print0 -exec touch {} \+
+find %{_project}/%{_packagename} -type f -iname '*.so*' -print0 -exec touch {} \+
+find %{_project}/%{_packagename} -type l -iname '*.so*' -print0 -exec touch -h {} \+
+
 %build
-# cd %{_project}/%{_packagename}
+# pushd %{_project}/%{_packagename}
 # make build -j4
+# popd
 
 #
 # Prepare the list of files that are the input to the binary and devel RPMs
@@ -88,7 +109,7 @@ touch ChangeLog README LICENSE MAINTAINER CHANGELOG.md
 popd
 
 ## Manually run find-debuginfo because...?
-## maybe only on x86_64
+## maybe only on x86_64?
 /usr/lib/rpm/find-debuginfo.sh -g -m -r --strict-build-id
 
 %clean
@@ -102,14 +123,15 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_prefix}/lib/*.so*
 
 %dir
-%{_prefix}/bin
-%{_prefix}/scripts
 
-%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md
+%doc %{_project}/%{_packagename}/MAINTAINER.md
+%doc %{_project}/%{_packagename}/README.md
+%doc %{_project}/%{_packagename}/CHANGELOG.md
 %license %{_project}/%{_packagename}/LICENSE
 
-## Only build devel and debuginfo RPMs for non-ARM
+#### Only build devel RPMs for non-ARM ####
 %if %not_arm
+
 #
 # Files that go in the devel RPM
 #
@@ -132,8 +154,15 @@ rm -rf %{buildroot}
 %{_prefix}/lib/arm
 %{_prefix}/include
 
-%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md
+%doc %{_project}/%{_packagename}/MAINTAINER.md
+%doc %{_project}/%{_packagename}/README.md
+%doc %{_project}/%{_packagename}/CHANGELOG.md
 %license %{_project}/%{_packagename}/LICENSE
+
+%endif
+
+#### Only build debuginfo RPMs for non-ARM? ####
+#%%%if %not_arm
 #
 # Files that go in the debuginfo RPM
 #
@@ -141,13 +170,15 @@ rm -rf %{buildroot}
 %defattr(-,root,root,0755)
 
 %dir
-/usr/lib/debug
-/usr/src/debug
+/usr/lib/debug/%{_prefix}
+/usr/src/debug/%{_packagename}-%{_version}
 
-%doc %{_project}/%{_packagename}/MAINTAINER.md %{_project}/%{_packagename}/README.md %{_project}/%{_packagename}/CHANGELOG.md
+%doc %{_project}/%{_packagename}/MAINTAINER.md
+%doc %{_project}/%{_packagename}/README.md
+%doc %{_project}/%{_packagename}/CHANGELOG.md
 %license %{_project}/%{_packagename}/LICENSE
 
-%endif
+#%%##%%%endif
 
 %post
 
