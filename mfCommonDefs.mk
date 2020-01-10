@@ -9,6 +9,8 @@ CMSGEMOS_ROOT?=/opt/cmsgemos
 CACTUS_ROOT?=/opt/cactus
 XDAQ_ROOT?=/opt/xdaq
 XHAL_ROOT?=/opt/xhal
+REEDMULLER_ROOT?=/opt/reedmuller
+WISCRPC_ROOT?=/opt/wiscrpcsvc
 
 GEM_PLATFORM := $(shell python -c "import platform; print(platform.platform())")
 GEM_ARCH     := $(shell uname -m)
