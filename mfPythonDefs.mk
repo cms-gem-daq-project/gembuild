@@ -14,6 +14,8 @@ PYTHONGLIBS  = $(shell pkg-config $(PYVER) --glibs)
 
 IncludeDirs+=$(PYTHON_INCLUDE_PREFIX)
 
+.PHONY: blacken
+
 # DependentLibraries+=python$(PYTHON_VERSION)
 
 # DynamicLinkFlags+=

@@ -123,6 +123,7 @@ endef
 .PHONY: all build default doc install uninstall release
 .PHONY: clean cleanrpm cleandoc cleanallrpm cleanall
 .PHONY: cleanrelease
+.PHONY: format
 
 ## @common default target, no dependencies
 default:
@@ -144,6 +145,20 @@ cleandoc:
 
 ## @common Run all necessary steps to build complete package
 all: build
+
+## @common Run all necessary format checker tools
+format: clang-format
+
+# CHANGED_FILES=( $(git diff --name-only $PARENT_HASH) )
+# should fail on dirty? ensure new files are added to the index? only run as a pre-commit hook?
+## @common Run clang-format on files modified since last commit
+clang-format:
+	@CHANGED_FILES=( $(git diff --name-only
+	@if ! [ -f $(ProjectPath)/.clang-format ]; then \
+	    ln -s $(CONFIG_DIR)
+	@for (f in ${CHANGED_FILES[@]}) do; \
+	    clang-format $f; \
+	done;
 
 # Install should fail if the required variables are not set:
 ifeq ($(and $(PackageLibraryDir),$(PackageIncludeDir),$(PackageExecDir),$(PackageSourceDir)),)
