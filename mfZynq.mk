@@ -1,6 +1,4 @@
-ifndef PETA_STAGE
-$(error "Error: PETA_STAGE environment variable not set.")
-endif
+PETA_STAGE?=$(PETA_PATH)/$(TARGET_BOARD)
 
 CFLAGS= -fomit-frame-pointer -pipe -fno-common -fno-builtin \
 	-Wall -std=c++14 \
