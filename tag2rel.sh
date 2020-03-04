@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh
 
 ## Script to extract versioning information from a git tag
 usage(){
@@ -79,6 +79,7 @@ gitrev=$(git rev-parse --short HEAD 2>/dev/null)
 gitver=$(git describe --abbrev=6 --dirty --always --tags 2>/dev/null)
 
 tagcommit=$(git rev-list --tags --max-count=1 2>/dev/null)
+
 if [ ! -n ${tagcommit+x} ]
 then
     lasttag=$(git describe --tags ${tagcommit} 2> /dev/null)
