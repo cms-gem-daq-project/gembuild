@@ -170,14 +170,16 @@ publishRepository () {
     local SSHHOME=/tmp/.ssh
     pushd ${ARTIFACTS_DIR}/repos
     rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
+          --chmod=go-w \
           --relative . --exclude=*.repo \
           --rsync-path="mkdir -p ${EOS_REPO_PATH} && rsync" ${KRB_USERNAME}@lxplus.cern.ch:${EOS_REPO_PATH}
     popd
 
     echo "Updating the repositories"
-    find . -iname '*.repo' -print0 -exec \
-         sed -i "s|\${EOS_SITE_URL}|${EOS_SITE_URL}|g" {} \:
+    find ${ARTIFACTS_DIR}/repos -iname '*.repo' -print0 -exec \
+         sed -i "s|\${EOS_SITE_URL}|${EOS_SITE_URL}|g" {} \+
     rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
+          --chmod=go-w \
           ${ARTIFACTS_DIR}/repos/*.repo ${KRB_USERNAME}@lxplus.cern.ch:${EOS_SW_PATH}/repos
 
     ## update the groups files?
@@ -206,6 +208,7 @@ publishDocs () {
         TAG_DOC_DIR=${CI_DOCS_DIR}
         CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
+              --chmod=go-w \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
 #         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
 # mkdir -p ${LATEST_DOC_DIR};
@@ -218,6 +221,7 @@ publishDocs () {
         TAG_DOC_DIR=${CI_DOCS_DIR}/latest
         CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
+              --chmod=go-w \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
 #         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
 # mkdir -p ${LATEST_DOC_DIR};
@@ -231,6 +235,7 @@ publishDocs () {
         CI_TAG_DOC_DIR=${EOS_DOCS_PATH}/${CI_PROJECT_NAME}/${TAG_DOC_DIR}
         LATEST_TAG_DOC_DIR=${CI_DOCS_DIR}/latest
         rsync -e "ssh -F ${SSHHOME}/config" -ahcX \
+              --chmod=go-w \
               --rsync-path="mkdir -p ${CI_TAG_DOC_DIR} && rsync" . --delete ${KRB_USERNAME}@lxplus.cern.ch:${CI_TAG_DOC_DIR}
 #         ssh -F ${SSHHOME}/config ${KRB_USERNAME}@lxplus.cern.ch "/bin/bash" <<EOF
 # mkdir -p ${LATEST_TAG_DOC_DIR};

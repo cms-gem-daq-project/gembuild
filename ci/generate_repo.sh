@@ -38,8 +38,8 @@ rename tar. t ${ARTIFACTS_DIR}/repos/tarballs/${PACKAGE_NAME}*tar*
 ### dump the yum repo file
 if [[ ${REL_VERSION} =~ PKG ]]
 then
-    REL_VERSION=$(echo ${REL_VERSION} | sed "s|PKG|${PACKAGE_NAME}|g")
-    cat <<EOF > ${ARTIFACTS_DIR}/repos/gemos_${REL_VERSION/./_}_${RELEASE_PLATFORM}.repo
+    REL_VERSION="unstable"
+    cat <<EOF > ${ARTIFACTS_DIR}/repos/gemos_unstable_${RELEASE_PLATFORM}.repo
 [gemos-unstable]
 name     = gemos -- unstable RPMs
 baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/unstable/${RELEASE_PLATFORM}/RPMS
@@ -69,6 +69,14 @@ else
 [gemos-base]
 name     = gemos -- ${REL_VERSION} RPMs
 baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/base/${RELEASE_PLATFORM}/RPMS
+gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
+enabled  = 1
+gpgcheck = 1
+repo_gpgcheck=1
+
+[gemos-extras]
+name     = gemos -- ${REL_VERSION} RPMs
+baseurl  = \${EOS_SITE_URL}/sw/gemos/repos/releases/${REL_VERSION}/extras/${RELEASE_PLATFORM}/RPMS
 gpgkey   = \${EOS_SITE_URL}/sw/gemos/repos/RPM-GPG-KEY-gemos
 enabled  = 1
 gpgcheck = 1
