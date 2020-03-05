@@ -2,15 +2,34 @@
 This package provides a set of generic scripts to standardize building of GEM DAQ software.
 
 ## Usage
-This repository should be checked out during a build, or added to the repository as a submodule at `REPO_BASE/config`
-Then, in the package `Makefile`, the appropriate `include` should be made.
+This repository should be checked out during a build, or (preferably) added to the repository as a submodule at `REPO_BASE/config`
+Then, in the package `Makefile`, the appropriate `include` statement(s) should be made.
 
 ## Contents
-This repository contains various common definitions and templates for driving the build process, as well as some scripts.
+This repository contains various common definitions and templates for driving the build process, as well as some additional helper scripts.
 
-### `tag2rel.sh`
-This script will extract automatically the version, build, and release information based on the `git` tag.
-For more information, execute `tag2rel.sh -h`
+### Helper scripts
+#### `tag2rel.sh`
+This script will extract automatically the version, build, and release information based on the `git` tag information (if present).
+It has been tested to work fully with `git` version `2.18`, but should also work with earlier versions.
+
+#### CI
+##### `gitlab-ci-template.yml`
+A starter template that may be copied into the project root to set up CI with CERN GitLab
+
+##### `utils.sh`
+Provides several functions that are used by other CI scripts
+
+##### `generate_repo.sh`
+Populates a repository tree structure for easy deployment.
+Also creates the `yum` `.repo` file.
+
+##### `publish_eos.sh`
+Perform the actual publication of artifacts (`rpm`s, docs, source tarballs) to the cmsgemdaq EOS hosted web area
+
+##### `parse_api_changes.sh`
+Designed to be able to run a check of the API/ABI compatibility between versions of the code.
+Not fully validated
 
 ### `make` helpers
 Targets that are defined within with a leading `_` are not intended to be used outside of the `config` package.
@@ -28,6 +47,13 @@ Most common definitions needed, and basic targets.
   * `BUILD_DATE`: the date
   * `BUILD_VERSION`: will be used as the `Release`, and is extracted using `tag2rel.sh`
   * `PREREL_VERSION`: will be used as part of the `pip` package name, and is extracted using `tag2rel.sh`
+* Sets variables for standard lookup paths, these may be overridden as needed:
+  * `CMSGEMOS_ROOT` : location of the installed `cmsgemos` package, defaults to `/opt/cmsgemos`
+  * `CACTUS_ROOT` : location of the installed `cactus` (`uhal` and `amc13`) packages, defaults to `/opt/cactus`
+  * `XDAQ_ROOT` : location of the installed `xdaq` package, defaults to `/opt/xdaq`
+  * `XHAL_ROOT` : location of the installed `xhal` package, defaults to `/opt/xhal`
+  * `REEDMULLER_ROOT` : location of the installed `reedmuller-c` package, defaults to `/opt/reedmuller`
+  * `WISCRPC_ROOT` : location of the installed `wiscrpcsvc` package, defaults to `/opt/wiscrpcsvc`
 
 ##### Compilation
 Sets up common compiler and compiler flags
@@ -49,9 +75,11 @@ This variable is be used to determine whether or not the libraries will be compi
   * `LibrarySONAME` and `LibraryFull` will both be set to `$(@F)`, and no symlinks will be generated
 
 ##### Package structure variables
-* `INSTALL_PATH` is the base directory of the installed project, defaults to `/opt/$(Project)`
-* `ProjectPath` is the base directory of the project, defaults to `$(BUILD_HOME)/$(Project)`
-* `PackagePath` is the base directory of the package, defaults to `$(ProjectPath)`
+* `INSTALL_PREFIX` : where to install the project, defaults to `/`, may be overridden for non-system installation
+* `INSTALL_PATH` : base directory of the installed project, defaults to `/opt/$(Project)`, **should not be overridden**
+* `PETA_PATH` : base directory where cross-compilation libraries will be installed on the host, defaults to `/opt/gem-peta-stage`, **should not be overridden**
+* `ProjectPath` : base directory of the project, defaults to `$(BUILD_HOME)/$(Project)`
+* `PackagePath` : base directory of the package, defaults to `$(ProjectPath)`
 * `PackageIncludeDir`: location of the headers, defaults to `$(PackagePath)/include`
 * `PackageSourceDir`: location of the source files, defaults to `$(PackagePath)/src`
 * `PackageTestSourceDir`: location of source files to build into executables, defaults to `$(PackagePath)/test`
@@ -125,11 +153,12 @@ Sets up environment and rules for packaging `python` packages.
 Sets up the environment for building `sphinx` documentation and provides the necessary targets.
 
 #### `mfZynq.mk`
-Extra definitions for building on a Xilinx `Zynq` SoC
+Extra definitions for building on a Xilinx `Zynq` SoC (currently specific to the UW CTP7)
 
+* `PETA_STAGE` is the location where the compiler will look for headers and libraries when cross-compiling, defaults to `$(PETA_PATH)`, may be overridden if developing features in multiple projects simultaneously.
 * `LDFLAGS` adds library locations from `PETA_STAGE`
 * `INSTALL_PATH` is changed to `/mnt/persistent/$(Project)`
-* Compiler toolchain is set to the `arm-linux-gnueabihf` toolchain, provided by the `Xilinx` SDK, with `:=` operator
+* Compiler toolchain is set to the `arm-linux-gnueabihf` toolchain, provided by the `Linaro`, with `:=` operator
 
 ### Packaging templates
 #### `setupTemplate.cfg`
@@ -142,14 +171,14 @@ $(PackagePath)/pkg/setup.cfg
 $(ProjectPath)/config/setupTemplate.cfg
 ```
 
-#### `setupTemplate.py`
-A generic `setup.py` file for `python` packages.
+#### `setupTemplate.(cfg|py)`
+Generic `setup.cfg` and `setup.py` files for `python` packages.
 The values will be populated based on variables at the time the rule is executed.
 This file will be ignored if a package specific template already exists, searching in order:
 ```
-$(PackagePath)/setup.py
-$(PackagePath)/pkg/setup.py
-$(ProjectPath)/config/setupTemplate.py
+$(PackagePath)/setup.(cfg|py)
+$(PackagePath)/pkg/setup.(cfg|py)
+$(ProjectPath)/config/setupTemplate.(cfg|py)
 ```
 
 #### `specTemplate.spec`
@@ -159,4 +188,33 @@ This file will be ignored if a package specific template already exists, searchi
 ```
 $(PackagePath)/spec.template
 $(ProjectPath)/config/specTemplate.spec
+```
+
+## Examples
+### Multiple simultaneous developments
+If developing, e.g,. both `xhal` and `ctp7_modules` simultaneously:
+
+#### Create a local `xhal` installation
+```sh
+cd /path/to/xhal
+INSTALL_PREFIX=/path/to/local/installation make install
+```
+
+#### Use local `xhal` installation when compiling `ctp7_modules`
+##### Set up the local `PETA_STAGE` area
+If working with multiple target boards, repeat for each
+```sh
+ln -ns /opt/gem-peta-stage/ctp7/usr /path/to/local/installation/opt/gem-peta-stage/ctp7/
+ln -ns /opt/gem-peta-stage/ctp7/lib /path/to/local/installation/opt/gem-peta-stage/ctp7/
+## link in any system installed packages you're not modifying
+ln -ns /opt/gem-peta-stage/ctp7/mnt/persistent/reedmuller /path/to/local/installation/opt/gem-peta-stage/ctp7/mnt/persistent/
+```
+##### Move to `ctp7_modules` work area
+```sh
+cd /path/to/ctp7_modules
+export PETA_STAGE=/path/to/local/installation/opt/gem-peta-stage
+## if making a local installation of this
+INSTALL_PREFIX=/path/to/local/installation make install
+## if just compiling against the local changes in `xhal`
+make
 ```
