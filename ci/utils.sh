@@ -277,6 +277,9 @@ BUILD_TAG=$(${CONFIG_DIR}/tag2rel.sh | \
                    awk '{split($$0,a," "); print a[8];}' | \
                    awk '{split($$0,b,":"); print b[2];}')
 
+## Make sure to have the branch refs for tag-only jobs
+git fetch -p --all
+
 # ## because CI_COMMIT_REF_NAME is *either* the branch *or* the tag of the running job
 ## with this we could get multiple hits
 # BRANCH_NAME=$(git branch --contains ${CI_COMMIT_REF_NAME})
