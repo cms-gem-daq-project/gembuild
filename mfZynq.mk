@@ -1,13 +1,13 @@
-PETA_STAGE?=$(PETA_PATH)/$(TARGET_BOARD)
+PETA_STAGE?=$(PETA_PATH)
 
 CFLAGS= -fomit-frame-pointer -pipe -fno-common -fno-builtin \
 	-Wall -std=c++14 \
 	-march=armv7-a -mfpu=neon -mfloat-abi=hard \
 	-mthumb-interwork -mtune=cortex-a9 \
 	-DEMBED -Dlinux -D__linux__ -Dunix -fPIC \
-	--sysroot=$(PETA_STAGE)
+	--sysroot=$(PETA_STAGE)/$(TARGET_BOARD)
 
-LDFLAGS+=--sysroot=$(PETA_STAGE)
+LDFLAGS+=--sysroot=$(PETA_STAGE)/$(TARGET_BOARD)
 
 INSTALL_PATH=/mnt/persistent/$(ShortProject)
 
