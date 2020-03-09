@@ -169,7 +169,7 @@ else
 fi
 
 ## special for "extra" dependencies"
-if [[ $CI_PROJECT_NAME =~ 'reedmuller|wiscrpc|gem-peta-stage' ]]
+if [[ $CI_PROJECT_NAME =~ (reedmuller|wiscrpc|gem-peta-stage) ]]
 then
     TAG_REPO_TYPE=extras/extras
 fi
